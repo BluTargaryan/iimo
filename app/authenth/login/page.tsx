@@ -5,7 +5,7 @@ import Button from "../../components/atoms/Button";
 
 export default function Login() {
   return (
-    <form className="pt-40 pb-20 col-flex items-center max-w-[270px] mx-auto">
+    <form className=" col-flex items-center max-w-[270px] mx-auto">
 
 <h1 className="mb-28">Log in</h1>
 
