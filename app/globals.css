@@ -31,6 +31,10 @@ h1{
   @apply text-3xl font-semibold;
 }
 
+h2{
+  @apply text-2xl font-semibold;
+}
+
 label{
   @apply font-medium;
 }
@@ -39,7 +43,9 @@ input{
 }
 
 
-
+.h1-like{
+  @apply text-3xl font-semibold;
+}
 
 .col-flex{
   @apply flex flex-col;
