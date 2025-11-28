@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className='pt-40 pb-20'>
+    <div className='pt-40 pb-20 px-4'>
         <TopHeader />
         {children}
     </div >

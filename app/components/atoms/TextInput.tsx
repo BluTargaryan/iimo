@@ -1,12 +1,28 @@
 import React from 'react'
 
-const TextInput = ({ id, name, type, label, placeholder }: { id: string, name: string, type: string, label: string, placeholder: string }) => {
+interface TextInputProps {
+  id: string
+  name: string
+  type: string
+  label: string
+  placeholder?: string
+  value?: string
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+}
+
+const TextInput = ({ id, name, type, label, placeholder, value, onChange }: TextInputProps) => {
   return (
     <div className="col-flex gap-3.5 items-center">
         <label htmlFor={id}>{label}</label>
-        <input type={type} id={id} name={name} placeholder={placeholder}
-        className="w-full border border-foreground rounded-3xl p-3.5 text-center 
-        " />
+        <input 
+          type={type} 
+          id={id} 
+          name={name} 
+          placeholder={placeholder}
+          value={value || ''}
+          onChange={onChange}
+          className="w-full border border-foreground rounded-3xl p-3.5 text-center focus:outline-none" 
+        />
     </div>
   )
 }

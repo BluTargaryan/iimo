@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 import ShootItem from '@/app/components/atoms/ShootItem'
+import AddShootFixed from '@/app/components/sections/AddShootFixed'
+import Toast from '@/app/components/sections/Toast'
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard')
@@ -26,8 +28,12 @@ const Dashboard = () => {
 
 <div className='col-flex gap-12 '>
   <ShootItem />
+  <ShootItem />
+  <ShootItem />
 
 </div>
+<AddShootFixed/>
+{/* <Toast/> */}
     </main>
   )
 }

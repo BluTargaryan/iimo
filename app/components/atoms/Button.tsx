@@ -1,8 +1,15 @@
 import React from 'react'
 
-const Button = ({ className, children }: { className: string, children: React.ReactNode }) => {
+interface ButtonProps {
+  className: string
+  children: React.ReactNode
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
+  type?: 'button' | 'submit' | 'reset'
+}
+
+const Button = ({ className, children, onClick, type = 'button' }: ButtonProps) => {
   return (
-    <button className={`rounded-3xl p-3.5 ${className}`}>{children}</button>
+    <button type={type} onClick={onClick} className={`rounded-3xl ${className}`}>{children}</button>
   )
 }
 

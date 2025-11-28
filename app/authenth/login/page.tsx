@@ -20,8 +20,8 @@ export default function Login() {
 </div>
 
 <div className="w-full col-flex gap-3.5">
-  <Button className="bg-foreground text-background w-full">Create account</Button>  
-  <Button className="border-2 border-foreground text-foreground w-full">Sign in</Button>  
+  <Button className="bg-foreground text-background w-full p-3.5">Create account</Button>  
+  <Button className="border-2 border-foreground text-foreground w-full p-3.5">Sign in</Button>  
 </div>
 
 

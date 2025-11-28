@@ -24,7 +24,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  @apply px-4 font-medium font-sans
+  @apply font-medium font-sans
 }
 
 h1{

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import TopHeaderLoggedIn from "@/app/components/sections/TopHeaderLoggedIn";
+import AddShootFixed from "../components/sections/AddShootFixed";
+import Toast from "../components/sections/Toast";
 
 
 export const metadata: Metadata = {
@@ -13,9 +15,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className='pt-40 pb-20'>
+    <div className='pt-40 pb-30 px-4'>
         <TopHeaderLoggedIn />
         {children}
+       
     </div>
   );
 }

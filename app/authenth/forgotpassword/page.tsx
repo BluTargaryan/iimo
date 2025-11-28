@@ -15,8 +15,8 @@ export default function ForgotPassword() {
 </div>
 
 <div className="w-full col-flex gap-3.5">
-  <Button className="bg-foreground text-background w-full">Submit email</Button>  
-  <Button className="border-2 border-foreground text-foreground w-full">Back to login</Button>  
+  <Button className="bg-foreground text-background w-full p-3.5">Submit email</Button>  
+  <Button className="border-2 border-foreground text-foreground w-full p-3.5">Back to login</Button>  
 </div>
 
 
