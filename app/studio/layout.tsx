@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className='pt-40 pb-30 px-4'>
+    <div className='pt-40 pb-30 px-4 md:px-10'>
         <TopHeaderLoggedIn />
         {children}
        

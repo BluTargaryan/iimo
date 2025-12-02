@@ -3,17 +3,19 @@
 import React, { useState } from 'react'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootFixed from '@/app/components/sections/AddShootFixed'
-import Toast from '@/app/components/sections/Toast'
+
 
 const Dashboard = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard')
+  const [activeTab, setActiveTab] = useState('Active')
 
-  const tabs = ['Dashboard', 'Expiring', 'Expired']
+  const tabs = ['Active', 'Expiring', 'Expired']
 
   return (
     <main className='col-flex'>
 
-<div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14'>
+<div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14
+md:flex-row! md:items-center! md:gap-12
+'>
   {tabs.map((tab) => (
     <span
       key={tab}
@@ -26,7 +28,7 @@ const Dashboard = () => {
 </div>
 
 
-<div className='col-flex gap-12 '>
+<div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
   <ShootItem />
   <ShootItem />
   <ShootItem />

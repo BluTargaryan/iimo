@@ -43,7 +43,7 @@ const AddShootPage = () => {
   }
 
   return (
-    <main className='col-flex items-center max-w-[270px] mx-auto'>
+    <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>Add client/shoot</h1>
 
       <form onSubmit={handleSubmit} className='w-full col-flex gap-6'>

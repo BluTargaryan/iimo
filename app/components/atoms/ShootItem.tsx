@@ -5,16 +5,16 @@ import share from '@/app/assets/images/share.svg'
 
 const ShootItem = () => {
   return (
-    <div className='col-flex gap-2 '>
+    <div className='col-flex gap-2 md:gap-4'>
         <h2>Title</h2>
-        <span className='text-xl'>Description</span>
+        <span className='font-normal md:text-xl'>Description</span>
 
-        <div className='grid grid-cols-2 gap-4.5'>
+        <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
 
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={100} height={100} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={100} height={100} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={100} height={100} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={100} height={100} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
         </div>
 
         <div className='row-flex gap-4.5'>

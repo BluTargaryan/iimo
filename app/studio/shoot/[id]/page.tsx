@@ -37,7 +37,9 @@ const ShootPage = ({ params }: ShootPageProps) => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14'>
+      <div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14 
+      md:flex-row! md:items-center! md:gap-12
+      '>
         {tabs.map((tab) => (
           <span
             key={tab}
@@ -52,14 +54,14 @@ const ShootPage = ({ params }: ShootPageProps) => {
       {/* Images Grid */}
       {activeTab === 'Images' && (
         <>
-          <div className='grid grid-cols-2 gap-4.5 mb-8'>
+          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5'>
             {images.map((_, index) => (
               <ImageGridItem key={index} />
             ))}
           </div>
 
           {/* Download Images Button */}
-          <Button className='bg-foreground text-background w-full p-3.5'>
+          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
             Download images
           </Button>
         </>
@@ -73,7 +75,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
           </div>
 
           {/* Download Agreement Button */}
-          <Button className='bg-foreground text-background w-full p-3.5'>
+          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
             Download agreement
           </Button>
         </>

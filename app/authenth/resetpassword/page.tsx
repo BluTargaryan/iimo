@@ -5,11 +5,11 @@ import Button from "../../components/atoms/Button";
 
 export default function ResetPassword() {
   return (
-    <form className="col-flex items-center max-w-[270px] mx-auto">
+    <form className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
 
 <h1 className="mb-28">Reset password</h1>
 
-<div className="col-flex gap-6 mb-15">
+<div className="col-flex gap-6 mb-15 w-full md:gap-7.5">
     <PasswordInput id="password" name="password" label="Password" placeholder="Enter your password" />
     <PasswordInput id="confirm-password" name="confirm-password" label="Confirm password" placeholder="Enter your password" />
 </div>

@@ -5,11 +5,11 @@ import Button from "../../components/atoms/Button";
 
 export default function ForgotPassword() {
   return (
-    <form className=" col-flex items-center max-w-[270px] mx-auto">
+    <form className=" col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
 
 <h1 className="mb-28">Forgot password</h1>
 
-<div className="col-flex gap-6 mb-15">
+<div className="col-flex gap-6 mb-15 w-full md:gap-7.5">
     <TextInput id="email" name="email" type="email" label="Email" placeholder="Enter your email" />
     <span className="text-center font-normal">In a few minutes, we will send a reset link to your email once we confirm it exists.</span>
 </div>

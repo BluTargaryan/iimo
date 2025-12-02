@@ -11,6 +11,9 @@ interface TextInputProps {
 }
 
 const TextInput = ({ id, name, type, label, placeholder, value, onChange }: TextInputProps) => {
+  // Determine if this is a controlled component
+  const isControlled = onChange !== undefined
+  
   return (
     <div className="col-flex gap-3.5 items-center">
         <label htmlFor={id}>{label}</label>
@@ -19,8 +22,12 @@ const TextInput = ({ id, name, type, label, placeholder, value, onChange }: Text
           id={id} 
           name={name} 
           placeholder={placeholder}
-          value={value || ''}
-          onChange={onChange}
+          {...(isControlled 
+            ? { value: value || '', onChange } 
+            : value !== undefined 
+              ? { defaultValue: value, readOnly: true }
+              : {}
+          )}
           className="w-full border border-foreground rounded-3xl p-3.5 text-center focus:outline-none" 
         />
     </div>
