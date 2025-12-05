@@ -26,25 +26,26 @@ const ShootPage = ({ params }: ShootPageProps) => {
   const images = Array(4).fill(null) // Mock 4 images
 
   return (
-    <main className='col-flex'>
+    <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
       {/* Title Section */}
-      <div className='col-flex gap-2 mb-8'>
+      <div className='col-flex gap-2 mb-8 xl:mb-25 xl:gap-3'>
         <h1>{shootData.title}</h1>
         <div className='col-flex gap-1'>
-          <span className='text-xl'>Owned by {shootData.owner}</span>
-          <span className='text-xl'>Usage expiring {shootData.expiryDate}</span>
+          <span className='text-xl xl:text-3xl'>Owned by {shootData.owner}</span>
+          <span className='text-xl xl:text-3xl'>Usage expiring {shootData.expiryDate}</span>
         </div>
       </div>
 
       {/* Navigation Tabs */}
       <div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14 
       md:flex-row! md:items-center! md:gap-12
+      xl:pb-4 xl:mb-22
       '>
         {tabs.map((tab) => (
           <span
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`text-xl ${activeTab === tab ? 'h1-like' : ''}`}
+            className={`text-xl xl:text-3xl ${activeTab === tab ? 'h1-like' : ''}`}
           >
             {tab}
           </span>
@@ -54,7 +55,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
       {/* Images Grid */}
       {activeTab === 'Images' && (
         <>
-          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5'>
+          <div className='grid grid-cols-3 gap-4.5 mb-8 md:gap-7.5'>
             {images.map((_, index) => (
               <ImageGridItem key={index} />
             ))}

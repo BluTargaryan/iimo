@@ -52,18 +52,18 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
     <>
       <div className='relative rounded-lg overflow-hidden bg-foreground'>
         {/* Image placeholder - black rectangle */}
-        <Image src={src} alt={alt} width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+        <Image src={src} alt={alt} width={300} height={300} className='w-full h-auto object-cover border-2 rounded-lg border-foreground' />
 
         
         {/* White bar overlay at bottom with rounded ends */}
         <div className='absolute bottom-2 inset-x-2 h-5.5 flex gap-1 md:justify-between md:h-7'>
           <Button 
             onClick={handleViewClick}
-            className='bg-background border border-foreground text-foreground flex-centerize flex-1 h-full p-1! text-xs md:flex-none md:w-36!'
+            className='bg-background border-2 border-foreground text-foreground flex-centerize flex-1 h-full p-1! text-xs md:flex-none md:w-36!'
           >
             View
           </Button>
-          <Button className='bg-background border border-foreground flex-centerize w-5.5 md:w-7'>
+          <Button className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'>
             <Image src={downloadIcon} alt='download' width={100} height={100} className='w-2.5 h-auto' />
           </Button>
         </div>
