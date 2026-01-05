@@ -7,7 +7,10 @@ export default function ResetPassword() {
   return (
     <form className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
 
-<h1 className="mb-28">Reset password</h1>
+<div className="w-64 col-flex items-center gap-4 mb-28">
+<h1 className="text-center">Reset password</h1>
+{/* <span className="text-center">An OTP has been sent to you at example@gmail.com. Please add it below.</span> */}
+</div>
 
 <div className="col-flex gap-6 mb-15 w-full md:gap-7.5">
     <PasswordInput id="password" name="password" label="Password" placeholder="Enter your password" />
@@ -15,7 +18,7 @@ export default function ResetPassword() {
 </div>
 
 <div className="w-full col-flex gap-3.5">
-  <Button className="bg-foreground text-background w-full p-3.5">Reset email</Button>  
+  <Button className="bg-foreground text-background w-full p-3.5">Reset</Button>  
   <Button className="border-2 border-foreground text-foreground w-full p-3.5">Back to login</Button>  
 </div>
 
