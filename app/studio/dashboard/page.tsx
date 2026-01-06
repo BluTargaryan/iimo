@@ -2,13 +2,23 @@
 
 import React, { useState } from 'react'
 import ShootItem from '@/app/components/atoms/ShootItem'
-import AddShootFixed from '@/app/components/sections/AddShootFixed'
+import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
+import Toast from '@/app/components/sections/Toast'
 
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Active')
+  const [showToast, setShowToast] = useState(false)
 
   const tabs = ['Active', 'Expiring', 'Expired']
+
+  const handleShare = () => {
+    setShowToast(true)
+  }
+
+  const handleCloseToast = () => {
+    setShowToast(false)
+  }
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
@@ -21,7 +31,7 @@ xl:pb-4 xl:mb-22
     <span
       key={tab}
       onClick={() => setActiveTab(tab)}
-      className={`text-xl xl:text-3xl ${activeTab === tab ? 'h1-like' : ''}`}
+      className={`text-xl xl:text-3xl ${activeTab === tab ? 'font-bold' : ''}`}
     >
       {tab}
     </span>
@@ -30,13 +40,13 @@ xl:pb-4 xl:mb-22
 
 
 <div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
-  <ShootItem />
-  <ShootItem />
-  <ShootItem />
+  <ShootItem onShare={handleShare} />
+  <ShootItem onShare={handleShare} />
+  <ShootItem onShare={handleShare} />
 
 </div>
-<AddShootFixed/>
-{/* <Toast/> */}
+<AddShootClientFixed/>
+<Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
   )
 }

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import TopHeaderLoggedIn from "@/app/components/sections/TopHeaderLoggedIn";
-import AddShootFixed from "../components/sections/AddShootFixed";
+import AddShootFixed from "../components/sections/AddShootClientFixed";
 import Toast from "../components/sections/Toast";
 
 

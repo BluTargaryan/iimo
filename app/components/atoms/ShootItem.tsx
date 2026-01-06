@@ -4,8 +4,19 @@ import Button from './Button'
 import share from '@/app/assets/images/share.svg'
 import { useRouter } from 'next/navigation'
 
-const ShootItem = () => {
+interface ShootItemProps {
+  onShare?: () => void
+}
+
+const ShootItem = ({ onShare }: ShootItemProps) => {
   const router = useRouter()
+  
+  const handleShare = () => {
+    if (onShare) {
+      onShare()
+    }
+  }
+
   return (
     <div className='col-flex gap-2 md:gap-4'>
         <h2>Title</h2>
@@ -21,7 +32,7 @@ const ShootItem = () => {
 
         <div className='row-flex gap-4.5'>
 <Button className='bg-foreground text-background w-full p-3!' onClick={() => router.push('/studio/shoot/1')}>View</Button>
-<Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize'>
+<Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
     <span>Share</span>
     <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
 </Button>
