@@ -1,16 +1,19 @@
 'use client'
 
 import React, { useState } from 'react'
-import ShootItem from '@/app/components/atoms/ShootItem'
+
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import Toast from '@/app/components/sections/Toast'
+import ClientItem from '@/app/components/atoms/ClientItem'
+import ArchiveConfirmationModal from '@/app/components/atoms/ArchiveConfirmationModal'
 
 
-const Dashboard = () => {
+const Clients = () => {
   const [activeTab, setActiveTab] = useState('Active')
   const [showToast, setShowToast] = useState(false)
+  const [showArchiveModal, setShowArchiveModal] = useState(false)
 
-  const tabs = ['Active', 'Expiring', 'Expired']
+  const tabs = ['Active', 'Archived']
 
   const handleShare = () => {
     setShowToast(true)
@@ -18,6 +21,14 @@ const Dashboard = () => {
 
   const handleCloseToast = () => {
     setShowToast(false)
+  }
+
+  const handleArchiveClick = () => {
+    setShowArchiveModal(true)
+  }
+
+  const handleCloseArchiveModal = () => {
+    setShowArchiveModal(false)
   }
 
   return (
@@ -39,16 +50,19 @@ xl:pb-4 xl:mb-22
 </div>
 
 
-<div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
-  <ShootItem onShare={handleShare} />
-  <ShootItem onShare={handleShare} />
-  <ShootItem onShare={handleShare} />
+<div className='grid grid-cols-1 gap-12 lg:grid-cols-3 '>
+  <ClientItem onArchive={handleArchiveClick} />
+  <ClientItem onArchive={handleArchiveClick} />
+  <ClientItem onArchive={handleArchiveClick} />
+  <ClientItem onArchive={handleArchiveClick} />
 
 </div>
+
+  <ArchiveConfirmationModal isVisible={showArchiveModal} onClose={handleCloseArchiveModal} />
 <AddShootClientFixed/>
 <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
   )
 }
 
-export default Dashboard
+export default Clients

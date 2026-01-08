@@ -14,7 +14,7 @@ const Button = ({ className, children, onClick, type = 'button', disabled = fals
       type={type} 
       onClick={onClick} 
       disabled={disabled}
-      className={`rounded-3xl ${className}`}
+      className={`rounded-3xl text-xs ${className}`}
     >
       {children}
     </button>
