@@ -6,12 +6,14 @@ import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import Toast from '@/app/components/sections/Toast'
 import ClientItem from '@/app/components/atoms/ClientItem'
 import ArchiveConfirmationModal from '@/app/components/atoms/ArchiveConfirmationModal'
+import NotesModal from '@/app/components/atoms/NotesModal'
 
 
 const Clients = () => {
   const [activeTab, setActiveTab] = useState('Active')
   const [showToast, setShowToast] = useState(false)
   const [showArchiveModal, setShowArchiveModal] = useState(false)
+  const [showNotesModal, setShowNotesModal] = useState(false)
 
   const tabs = ['Active', 'Archived']
 
@@ -29,6 +31,14 @@ const Clients = () => {
 
   const handleCloseArchiveModal = () => {
     setShowArchiveModal(false)
+  }
+
+  const handleNotesClick = () => {
+    setShowNotesModal(true)
+  }
+
+  const handleCloseNotesModal = () => {
+    setShowNotesModal(false)
   }
 
   return (
@@ -51,14 +61,15 @@ xl:pb-4 xl:mb-22
 
 
 <div className='grid grid-cols-1 gap-12 lg:grid-cols-3 '>
-  <ClientItem onArchive={handleArchiveClick} />
-  <ClientItem onArchive={handleArchiveClick} />
-  <ClientItem onArchive={handleArchiveClick} />
-  <ClientItem onArchive={handleArchiveClick} />
+  <ClientItem onArchive={handleArchiveClick} onNotes={handleNotesClick} />
+  <ClientItem onArchive={handleArchiveClick} onNotes={handleNotesClick} />
+  <ClientItem onArchive={handleArchiveClick} onNotes={handleNotesClick} />
+  <ClientItem onArchive={handleArchiveClick} onNotes={handleNotesClick} />
 
 </div>
 
   <ArchiveConfirmationModal isVisible={showArchiveModal} onClose={handleCloseArchiveModal} />
+  <NotesModal isVisible={showNotesModal} onClose={handleCloseNotesModal} />
 <AddShootClientFixed/>
 <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
