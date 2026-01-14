@@ -32,9 +32,16 @@ const UploadAssetsPage = () => {
           disabled={photos.length === 0}
         />
 
-        <Button type="submit" className='bg-foreground text-background w-full p-3.5'>
-          Complete registration
+
+<div className='w-full col-flex gap-3.5'>
+<Button type="submit" className='bg-foreground text-background w-full p-3.5'>
+         Upload images
         </Button>
+        <Button type="submit" className='bg-background text-foreground border border-foreground w-full p-3.5'>
+          Do this later
+        </Button>
+</div>
+        
       </form>
     </main>
   )

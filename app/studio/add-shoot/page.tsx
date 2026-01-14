@@ -10,13 +10,15 @@ import Button from '@/app/components/atoms/Button'
 const AddShootPage = () => {
   const [formData, setFormData] = useState({
     title: '',
+    client: '',
     usage: '',
     other: '',
-    expiryDate: '',
+    shootDate: '',
     contract: null as File | null
   })
 
   const usageOptions = ['Option 1', 'Option 2', 'Option 3', 'Other'] // Replace with actual options
+  const clientOptions = ['Client 1', 'Client 2', 'Client 3'] // Replace with actual options
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -44,7 +46,7 @@ const AddShootPage = () => {
 
   return (
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
-      <h1 className='mb-28'>Add client/shoot</h1>
+      <h1 className='mb-28'>Add shoot</h1>
 
       <form onSubmit={handleSubmit} className='w-full col-flex gap-6'>
       <div className="col-flex gap-6 mb-15">
@@ -52,12 +54,21 @@ const AddShootPage = () => {
           id="title"
           name="title"
           type="text"
-          label="Title of client / shoot"
+          label="Title of shoot"
           placeholder="Enter the title"
           value={formData.title}
           onChange={handleInputChange}
         />
 
+        <Select
+          id="client"
+          name="client"
+          label="Client"
+          placeholder="Pick an option"
+          options={clientOptions}
+          value={formData.client}
+          onChange={handleInputChange}
+        />
         <Select
           id="usage"
           name="usage"
@@ -81,22 +92,22 @@ const AddShootPage = () => {
         )}
 
         <DateInput
-          id="expiryDate"
-          name="expiryDate"
-          label="Expiry date"
+          id="shootDate"
+          name="shootDate"
+          label="Shoot date"
           placeholder="dd/mm/yy"
-          value={formData.expiryDate}
+          value={formData.shootDate}
           onChange={handleInputChange}
         />
 
-        <FileInput
+        {/* <FileInput
           id="contract"
           name="contract"
           label="Contract (optional)"
           placeholder="Select a file (pdf)"
           accept=".pdf"
           onChange={handleFileChange}
-        />
+        /> */}
         </div>
 
         <Button type="submit" className='bg-foreground text-background w-full p-3.5'>

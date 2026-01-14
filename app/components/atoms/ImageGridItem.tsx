@@ -9,9 +9,10 @@ import Button from './Button'
 interface ImageGridItemProps {
   src?: string
   alt?: string
+  onDelete?: () => void
 }
 
-const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb', alt = 'shoot-image' }: ImageGridItemProps) => {
+const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb', alt = 'shoot-image', onDelete }: ImageGridItemProps) => {
   const [isOverlayOpen, setIsOverlayOpen] = useState(false)
 
   const handleViewClick = (e: React.MouseEvent) => {
@@ -66,6 +67,14 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
           <Button className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'>
             <Image src={downloadIcon} alt='download' width={100} height={100} className='w-2.5 h-auto' />
           </Button>
+          {onDelete && (
+            <Button 
+              onClick={onDelete}
+              className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'
+            >
+              <Image src={closeIcon} alt='delete' width={100} height={100} className='w-2.5 h-auto' />
+            </Button>
+          )}
         </div>
       </div>
 

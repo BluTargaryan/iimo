@@ -4,17 +4,20 @@ import React, { useState } from 'react'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
+import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConfirmationModal'
 import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 
-interface PreviewPageProps {
+interface ShootPageProps {
   params: {
     id: string
   }
 }
 
-const PreviewPage = ({ params }: PreviewPageProps) => {
+const ShootPage = ({ params }: ShootPageProps) => {
   const [activeTab, setActiveTab] = useState('Images')
+  const [imageToDelete, setImageToDelete] = useState<number | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
   
   // Mock data - replace with actual data fetching
   const shootData = {
@@ -29,6 +32,24 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
 
   const tabs = ['Images', 'Usage Document', 'Usage Rights']
   const images = Array(4).fill(null) // Mock 4 images
+
+  const handleDeleteImage = (index: number) => {
+    setImageToDelete(index)
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (imageToDelete !== null) {
+      // TODO: Implement delete image functionality - delete from backend
+      console.log('Deleting image at index:', imageToDelete)
+      setImageToDelete(null)
+    }
+  }
+
+  const handleCloseDeleteModal = () => {
+    setShowDeleteModal(false)
+    setImageToDelete(null)
+  }
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
@@ -63,14 +84,22 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
         <>
           <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5'>
             {images.map((_, index) => (
-              <ImageGridItem key={index} />
+              <ImageGridItem 
+                key={index} 
+                onDelete={() => handleDeleteImage(index)}
+              />
             ))}
           </div>
 
-          {/* Download Images Button */}
-          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
-            Download images
-          </Button>
+          {/* Action Buttons */}
+          <div className='row-flex gap-2'>
+            <Button className='bg-foreground text-background flex-1 p-3.5'>
+              Download images
+            </Button>
+            <Button className='bg-background text-foreground border border-foreground flex-1 p-3.5'>
+              Upload images
+            </Button>
+          </div>
         </>
       )}
 
@@ -102,9 +131,15 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
           </Button>
         </div>
       )}
+
+      <DeleteAssetConfirmationModal 
+        isVisible={showDeleteModal}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDelete}
+      />
     </main>
   )
 }
 
-export default PreviewPage
+export default ShootPage
 

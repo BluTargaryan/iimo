@@ -78,7 +78,7 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
 
         {/* Dropdown Options */}
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 bg-background border border-foreground border-t-0 rounded-b-3xl overflow-hidden shadow-lg">
+          <div className="absolute top-full left-0 right-0 z-20 bg-background border border-foreground border-t-0 rounded-b-3xl overflow-hidden shadow-lg">
             {options.map((option, index) => (
               <React.Fragment key={option}>
                 {index > 0 && (
