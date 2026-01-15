@@ -128,7 +128,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
         </button>
 
         {/* Header with title and Add note button */}
-        <div className='row-flex justify-between items-center mt-2'>
+        <div className='row-flex justify-between items-center mt-2 md:mb-12'>
           <h2 className='text-2xl font-bold'>Notes</h2>
           <Button 
             className='bg-foreground text-background px-4 py-2'
@@ -166,7 +166,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
         )}
 
         {/* Notes list */}
-        <div className='col-flex gap-6'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           {notes.map((note) => (
             <div key={note.id} className='col-flex gap-2 relative'>
               {noteToEdit === note.id ? (

@@ -32,7 +32,9 @@ const ArchiveConfirmationModal = ({ isVisible, onClose }: ArchiveConfirmationMod
     onClick={() => onClose()}
     >
 
-    <div className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7'>
+    <div className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7
+    md:max-w-[400px]
+    '>
     <div className='col-flex gap-2 text-center'>
     <h2>Archive Client</h2>
     <span>Are you sure you want to archive this client?</span>

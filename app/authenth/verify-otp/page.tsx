@@ -7,7 +7,7 @@ export default function VerifyOtp() {
   return (
     <form className=" col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
 
-<div className="w-64 col-flex items-center gap-4 mb-28">
+<div className="w-64 col-flex items-center gap-4 mb-28 text-center md:w-full">
 <h1 className="">OTP Verification</h1>
 <span className="text-center">An OTP has been sent to you at example@gmail.com. Please add it below.</span>
 </div>

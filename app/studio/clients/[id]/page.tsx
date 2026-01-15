@@ -118,13 +118,13 @@ const ClientPage = ({ params }: ClientPageProps) => {
   }
 
   return (
-    <main className='col-flex xl:max-w-[1144px] xl:mx-auto pb-32'>
+    <main className='col-flex  md:gap-25 xl:max-w-[1144px] xl:mx-auto pb-32'>
       {/* Client Section */}
-      <div className='col-flex gap-4 mb-12'>
+      <div className='col-flex gap-4 mb-12 '>
         <div className='col-flex justify-between items-start gap-4'>
           <div className='col-flex gap-2'>
             <h1 className='text-2xl xl:text-3xl font-bold'>Client</h1>
-            <div className='col-flex gap-1 text-sm xl:text-base'>
+            <div className='col-flex gap-1 text-sm md:text-base'>
               <span>Added on {clientData.addedDate}, has {clientData.shootCount} shoots</span>
               <span>
                 Contact : <a href={`mailto:${clientData.email}`} className='underline'>{clientData.email}</a>
@@ -141,7 +141,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
       </div>
 
       {/* Notes Section */}
-      <div className='col-flex gap-6 mb-12'>
+      <div className='col-flex gap-6 mb-12 md:gap-16'>
         <div className='row-flex justify-between items-center'>
           <h2 className='text-xl xl:text-2xl font-bold'>Notes</h2>
           <Button 
@@ -180,7 +180,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
         )}
 
         {/* Notes list */}
-        <div className='col-flex gap-6'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
           {notes.map((note) => (
             <div key={note.id} className='col-flex gap-2 relative'>
               {noteToEdit === note.id ? (
@@ -231,7 +231,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
                 </div>
               ) : (
                 <>
-                  <p className='text-sm'>{note.text}</p>
+                  <p className='text-sm md:text-base'>{note.text}</p>
                   <div className='row-flex gap-2'>
                     <Button 
                       className='bg-background text-foreground border border-foreground px-3 py-2 flex-1'
@@ -254,7 +254,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
       </div>
 
       {/* Shoots Section */}
-      <div className='col-flex gap-6 mb-12'>
+      <div className='col-flex gap-6 mb-12 md:gap-16'>
         <div className='row-flex justify-between items-center'>
           <h2 className='text-xl xl:text-2xl font-bold'>Shoots</h2>
           <Button 

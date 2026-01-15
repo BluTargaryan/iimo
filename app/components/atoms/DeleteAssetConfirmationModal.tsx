@@ -42,7 +42,9 @@ const DeleteAssetConfirmationModal = ({ isVisible, onClose, onConfirm }: DeleteA
       }}
     >
       <div 
-        className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7 max-w-md'
+        className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7 max-w-md
+        md:max-w-[400px]
+        '
         onClick={(e) => e.stopPropagation()}
       >
         <div className='col-flex gap-2 text-center'>

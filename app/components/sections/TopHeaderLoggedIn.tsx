@@ -21,12 +21,12 @@ const TopHeader = () => {
     ">
         <span className='font-black xl:text-xl'>iimo</span>
 
-        <span className='row-flex font-normal gap-3 text-sm'>
+        <span className='row-flex font-normal gap-3 text-sm md:gap-5 md:text-base'>
             <span>Shoots</span>
             <span>Clients</span>
         </span>
 
-        <span className='row-flex font-normal gap-3 text-sm'>
+        <span className='row-flex font-normal gap-3 text-sm md:gap-5 md:text-base'>
             <span onClick={handleNotifications}>Notifications</span>
             <span className='row-flex gap-1 items-center'>
             <span>Logout</span>

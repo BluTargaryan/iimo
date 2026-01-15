@@ -35,7 +35,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
       {/* Title Section */}
       <div className='col-flex gap-2 mb-8 xl:mb-25 xl:gap-3'>
         <h1>{shootData.title}</h1>
-        <div className='text-sm col-flex gap-1'>
+        <div className='text-sm col-flex gap-1 md:text-base'>
           <span className=' xl:text-3xl'>Done for {shootData.client}, on {shootData.doneDate}</span>
           <p className='font-normal xl:text-3xl'>{shootData.description}</p>
           <span className='xl:text-3xl font-bold'>Delivered to client, expiring {shootData.expiryDate}</span>

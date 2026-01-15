@@ -58,6 +58,7 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
         
         {/* White bar overlay at bottom with rounded ends */}
         <div className='absolute bottom-2 inset-x-2 h-5.5 flex gap-1 md:justify-between md:h-7'>
+          <div className='row-flex gap-2 flex-1'>
           <Button 
             onClick={handleViewClick}
             className='bg-background border-2 border-foreground text-foreground flex-centerize flex-1 h-full p-1! text-xs md:flex-none md:w-36!'
@@ -67,6 +68,7 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
           <Button className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'>
             <Image src={downloadIcon} alt='download' width={100} height={100} className='w-2.5 h-auto' />
           </Button>
+          </div>
           {onDelete && (
             <Button 
               onClick={onDelete}
