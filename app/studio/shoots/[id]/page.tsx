@@ -31,7 +31,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
   }
 
   const tabs = ['Images', 'Usage Document', 'Usage Rights']
-  const images = Array(4).fill(null) // Mock 4 images
+  const images = Array(6).fill(null) // Mock 4 images
 
   const handleDeleteImage = (index: number) => {
     setImageToDelete(index)
@@ -82,7 +82,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
       {/* Images Grid */}
       {activeTab === 'Images' && (
         <>
-          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5'>
+          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
             {images.map((_, index) => (
               <ImageGridItem 
                 key={index} 
@@ -93,10 +93,10 @@ const ShootPage = ({ params }: ShootPageProps) => {
 
           {/* Action Buttons */}
           <div className='row-flex gap-2'>
-            <Button className='bg-foreground text-background flex-1 p-3.5'>
+            <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
               Download images
             </Button>
-            <Button className='bg-background text-foreground border border-foreground flex-1 p-3.5'>
+            <Button className='bg-background text-foreground border border-foreground w-full p-3.5 md:w-[322px]'>
               Upload images
             </Button>
           </div>

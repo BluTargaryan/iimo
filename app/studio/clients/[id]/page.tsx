@@ -145,7 +145,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
         <div className='row-flex justify-between items-center'>
           <h2 className='text-xl xl:text-2xl font-bold'>Notes</h2>
           <Button 
-            className='bg-foreground text-background px-4 py-2'
+            className='bg-foreground text-background px-4 py-2 xl:w-[238px]'
             onClick={handleAddNoteClick}
           >
             <span>Add note</span>
@@ -164,13 +164,13 @@ const ClientPage = ({ params }: ClientPageProps) => {
             />
             <div className='row-flex gap-2'>
               <Button 
-                className='bg-foreground text-background flex-1 p-3!'
+                className='bg-foreground text-background w-full p-3! xl:w-[238px]!'
                 onClick={handleSubmitNote}
               >
                 <span>{noteText.trim() ? 'Submit edits' : 'Add note'}</span>
               </Button>
               <Button 
-                className='bg-background text-foreground border border-foreground flex-1 p-3!'
+                className='bg-background text-foreground border border-foreground w-full p-3! xl:w-[238px]!'
                 onClick={handleCancelNote}
               >
                 <span>Cancel</span>
@@ -180,7 +180,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
         )}
 
         {/* Notes list */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3'>
           {notes.map((note) => (
             <div key={note.id} className='col-flex gap-2 relative'>
               {noteToEdit === note.id ? (
@@ -258,7 +258,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
         <div className='row-flex justify-between items-center'>
           <h2 className='text-xl xl:text-2xl font-bold'>Shoots</h2>
           <Button 
-            className='bg-foreground text-background px-4 py-2'
+            className='bg-foreground text-background px-4 py-2 xl:w-[238px]'
             onClick={() => router.push('/studio/add-shoot')}
           >
             <span>Add shoot</span>
@@ -283,6 +283,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
 
         {/* Shoots Grid */}
         <div className='grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3'>
+          <ShootItem onShare={handleShare} />
           <ShootItem onShare={handleShare} />
           <ShootItem onShare={handleShare} />
         </div>

@@ -115,7 +115,10 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
       }}
     >
       <div 
-        className='relative w-full max-w-2xl bg-background rounded-lg pt-8 px-6 pb-20 col-flex gap-6 max-h-[90vh] overflow-y-auto'
+        className='relative w-full max-w-2xl bg-background rounded-lg pt-8 px-6 pb-20 col-flex gap-6 max-h-[90vh] overflow-y-auto
+        
+        xl:max-w-[1152px]
+        '
         onClick={(e) => e.stopPropagation()}
       >
         
@@ -128,7 +131,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
         </button>
 
         {/* Header with title and Add note button */}
-        <div className='row-flex justify-between items-center mt-2 md:mb-12'>
+        <div className='row-flex justify-between items-center mt-2 md:mb-12 xl:w-[956px] xl:mx-auto'>
           <h2 className='text-2xl font-bold'>Notes</h2>
           <Button 
             className='bg-foreground text-background px-4 py-2'
@@ -140,7 +143,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
 
         {/* Add note form */}
         {showAddNoteForm && (
-          <div className='col-flex gap-4'>
+          <div className='col-flex gap-4 xl:w-[956px] xl:mx-auto'>
             <textarea
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
@@ -150,13 +153,13 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
             />
             <div className='row-flex gap-2'>
               <Button 
-                className='bg-foreground text-background flex-1 p-3!'
+                className='bg-foreground text-background w-full p-3! xl:w-[238px]!'
                 onClick={handleSubmitNote}
               >
                 <span>{noteText.trim() ? 'Submit edits' : 'Add note'}</span>
               </Button>
               <Button 
-                className='bg-background text-foreground border border-foreground flex-1 p-3!'
+                className='bg-background text-foreground border border-foreground w-full p-3! xl:w-[238px]!'
                 onClick={handleCancelNote}
               >
                 <span>Cancel</span>
@@ -166,7 +169,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
         )}
 
         {/* Notes list */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:max-w-[956px] xl:mx-auto'>
           {notes.map((note) => (
             <div key={note.id} className='col-flex gap-2 relative'>
               {noteToEdit === note.id ? (
@@ -217,8 +220,8 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
                 </div>
               ) : (
                 <>
-                  <p className='text-sm'>{note.text}</p>
-                  <div className='row-flex gap-2'>
+                  <p className='text-sm xl:text-base xl:mb-6'>{note.text}</p>
+                  <div className='row-flex gap-2 xl:flex-col!'>
                     <Button 
                       className='bg-background text-foreground border border-foreground px-3 py-1 flex-1'
                       onClick={() => handleEditNote(note.id)}

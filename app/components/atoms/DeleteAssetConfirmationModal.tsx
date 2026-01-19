@@ -44,6 +44,7 @@ const DeleteAssetConfirmationModal = ({ isVisible, onClose, onConfirm }: DeleteA
       <div 
         className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7 max-w-md
         md:max-w-[400px]
+        xl:max-w-[648px]
         '
         onClick={(e) => e.stopPropagation()}
       >

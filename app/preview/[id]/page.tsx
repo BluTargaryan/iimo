@@ -28,7 +28,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
   }
 
   const tabs = ['Images', 'Usage Document', 'Usage Rights']
-  const images = Array(4).fill(null) // Mock 4 images
+  const images = Array(6).fill(null) // Mock 4 images
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
@@ -61,7 +61,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
       {/* Images Grid */}
       {activeTab === 'Images' && (
         <>
-          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5'>
+          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
             {images.map((_, index) => (
               <ImageGridItem key={index} />
             ))}

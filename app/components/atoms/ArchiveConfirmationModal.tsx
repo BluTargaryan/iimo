@@ -34,6 +34,7 @@ const ArchiveConfirmationModal = ({ isVisible, onClose }: ArchiveConfirmationMod
 
     <div className='w-full bg-background rounded-lg py-14 px-9 col-flex gap-7
     md:max-w-[400px]
+    xl:max-w-[648px]
     '>
     <div className='col-flex gap-2 text-center'>
     <h2>Archive Client</h2>

@@ -1,4 +1,4 @@
-import React from 'react'
+'use client'
 import Button from '../atoms/Button'
 
 const AddShootClientFixed = () => {
@@ -9,14 +9,14 @@ const AddShootClientFixed = () => {
     '>
         <Button
         className='bg-foreground text-background w-full p-3!
-        xl:w-[662px] 
+        xl:w-[322px] 
         '
         >
             <span>Add client</span>
         </Button>
         <Button
         className='bg-background text-foreground border border-foreground  w-full p-3!
-        xl:w-[662px] 
+        xl:w-[322px] 
         '
         >
             <span>Add shoot</span>
