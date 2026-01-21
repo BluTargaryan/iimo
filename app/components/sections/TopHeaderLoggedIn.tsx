@@ -4,12 +4,18 @@ import { useState } from 'react'
 import Image from 'next/image'
 import logoutIcon from '@/app/assets/images/logout.svg'
 import Notifications from './Notifications'
+import { useAuth } from '@/app/contexts/AuthContext'
 
 const TopHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false)
+  const { signOut } = useAuth()
 
   const handleNotifications = () => {
     setShowNotifications(!showNotifications)
+  }
+
+  const handleLogout = async () => {
+    await signOut()
   }
 
   return (
@@ -28,7 +34,7 @@ const TopHeader = () => {
 
         <span className='row-flex font-normal gap-3 text-sm md:gap-5 md:text-base'>
             <span onClick={handleNotifications}>Notifications</span>
-            <span className='row-flex gap-1 items-center'>
+            <span className='row-flex gap-1 items-center cursor-pointer' onClick={handleLogout}>
             <span>Logout</span>
             <Image src={logoutIcon} alt="logout" width={20} height={20} className='w-3 h-auto'/>
             </span>
