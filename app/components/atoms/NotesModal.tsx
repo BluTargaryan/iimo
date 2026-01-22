@@ -4,17 +4,42 @@ import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Button from './Button'
 import closeIcon from '@/app/assets/images/close.svg'
+import { fetchNotes, createNote, updateNote, deleteNote, type Note } from '@/app/utils/clientOperations'
 
 interface NotesModalProps {
   isVisible: boolean
   onClose: () => void
+  clientId?: string
 }
 
-const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
+const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
+  const [notes, setNotes] = useState<Note[]>([])
+  const [loading, setLoading] = useState(false)
   const [showAddNoteForm, setShowAddNoteForm] = useState(false)
   const [noteText, setNoteText] = useState('')
-  const [noteToDelete, setNoteToDelete] = useState<number | null>(null)
-  const [noteToEdit, setNoteToEdit] = useState<number | null>(null)
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
+  const [noteToEdit, setNoteToEdit] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Fetch notes when modal opens and clientId is provided
+  useEffect(() => {
+    if (isVisible && clientId) {
+      const loadNotes = async () => {
+        setLoading(true)
+        const { data, error } = await fetchNotes(clientId)
+        if (error) {
+          console.error('Error fetching notes:', error)
+          setNotes([])
+        } else {
+          setNotes(data || [])
+        }
+        setLoading(false)
+      }
+      loadNotes()
+    } else if (isVisible && !clientId) {
+      setNotes([])
+    }
+  }, [isVisible, clientId])
 
   useEffect(() => {
     if (isVisible) {
@@ -28,6 +53,7 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
       setNoteText('')
       setNoteToDelete(null)
       setNoteToEdit(null)
+      setNotes([])
     }
 
     // Cleanup: restore scrolling when component unmounts
@@ -38,40 +64,42 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
 
   if (!isVisible) return null
 
-  // Sample notes data - in a real app, this would come from props or state
-  const notes = [
-    {
-      id: 1,
-      text: 'Gorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.'
-    },
-    {
-      id: 2,
-      text: 'Gorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.'
-    },
-    {
-      id: 3,
-      text: 'Gorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus.'
-    }
-  ]
-
   const handleAddNoteClick = () => {
     setShowAddNoteForm(true)
   }
 
-  const handleSubmitNote = () => {
-    if (noteText.trim()) {
-      if (noteToEdit !== null) {
-        // TODO: Implement edit note functionality - update in backend
-        console.log('Editing note:', noteToEdit, 'with text:', noteText)
-        setNoteToEdit(null)
-      } else {
-        // TODO: Implement add note functionality - save to backend
-        console.log('Adding note:', noteText)
-        setShowAddNoteForm(false)
+  const handleSubmitNote = async () => {
+    if (!noteText.trim() || !clientId) return
+
+    setIsSubmitting(true)
+    
+    if (noteToEdit !== null) {
+      // Update existing note
+      const { error } = await updateNote(noteToEdit, noteText)
+      if (error) {
+        console.error('Error updating note:', error)
+        setIsSubmitting(false)
+        return
       }
-      // Reset form
-      setNoteText('')
+      setNoteToEdit(null)
+    } else {
+      // Create new note
+      const { error } = await createNote(clientId, noteText)
+      if (error) {
+        console.error('Error creating note:', error)
+        setIsSubmitting(false)
+        return
+      }
+      setShowAddNoteForm(false)
     }
+
+    // Refresh notes list
+    const { data } = await fetchNotes(clientId)
+    setNotes(data || [])
+    
+    // Reset form
+    setNoteText('')
+    setIsSubmitting(false)
   }
 
   const handleCancelNote = () => {
@@ -80,25 +108,33 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
     setNoteToEdit(null)
   }
 
-  const handleEditNote = (noteId: number) => {
+  const handleEditNote = (noteId: string) => {
     const note = notes.find(n => n.id === noteId)
     if (note) {
-      setNoteText(note.text)
+      setNoteText(note.content)
       setNoteToEdit(noteId)
       setShowAddNoteForm(false) // Close add form if open
     }
   }
 
-  const handleDeleteNote = (noteId: number) => {
+  const handleDeleteNote = (noteId: string) => {
     setNoteToDelete(noteId)
   }
 
-  const handleConfirmDelete = () => {
-    if (noteToDelete !== null) {
-      // TODO: Implement delete note functionality - delete from backend
-      console.log('Deleting note:', noteToDelete)
+  const handleConfirmDelete = async () => {
+    if (noteToDelete === null || !clientId) return
+
+    const { error } = await deleteNote(noteToDelete)
+    if (error) {
+      console.error('Error deleting note:', error)
       setNoteToDelete(null)
+      return
     }
+
+    // Refresh notes list
+    const { data } = await fetchNotes(clientId)
+    setNotes(data || [])
+    setNoteToDelete(null)
   }
 
   const handleCancelDelete = () => {
@@ -155,8 +191,9 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
               <Button 
                 className='bg-foreground text-background w-full p-3! xl:w-[238px]!'
                 onClick={handleSubmitNote}
+                disabled={isSubmitting || !clientId}
               >
-                <span>{noteText.trim() ? 'Submit edits' : 'Add note'}</span>
+                <span>{isSubmitting ? 'Saving...' : (noteText.trim() ? 'Submit edits' : 'Add note')}</span>
               </Button>
               <Button 
                 className='bg-background text-foreground border border-foreground w-full p-3! xl:w-[238px]!'
@@ -169,77 +206,89 @@ const NotesModal = ({ isVisible, onClose }: NotesModalProps) => {
         )}
 
         {/* Notes list */}
-        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:max-w-[956px] xl:mx-auto'>
-          {notes.map((note) => (
-            <div key={note.id} className='col-flex gap-2 relative'>
-              {noteToEdit === note.id ? (
-                /* Edit note form */
-                <div className='col-flex gap-4'>
-                  <textarea
-                    value={noteText}
-                    onChange={(e) => setNoteText(e.target.value)}
-                    placeholder='Enter your note here...'
-                    className='w-full border border-foreground rounded-lg p-4 min-h-[120px] resize-none focus:outline-none'
-                    rows={4}
-                  />
-                  <div className='row-flex gap-2'>
-                    <Button 
-                      className='bg-foreground text-background flex-1 p-3!'
-                      onClick={handleSubmitNote}
-                    >
-                      <span>Submit edits</span>
-                    </Button>
-                    <Button 
-                      className='bg-background text-foreground border border-foreground flex-1 p-3!'
-                      onClick={handleCancelNote}
-                    >
-                      <span>Cancel</span>
-                    </Button>
+        {loading ? (
+          <div className='col-flex gap-4 xl:w-[956px] xl:mx-auto'>
+            <p>Loading notes...</p>
+          </div>
+        ) : notes.length === 0 ? (
+          <div className='col-flex gap-4 xl:w-[956px] xl:mx-auto'>
+            <p>No notes yet. Add your first note above.</p>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:max-w-[956px] xl:mx-auto'>
+            {notes.map((note) => (
+              <div key={note.id} className='col-flex gap-2 relative'>
+                {noteToEdit === note.id ? (
+                  /* Edit note form */
+                  <div className='col-flex gap-4'>
+                    <textarea
+                      value={noteText}
+                      onChange={(e) => setNoteText(e.target.value)}
+                      placeholder='Enter your note here...'
+                      className='w-full border border-foreground rounded-lg p-4 min-h-[120px] resize-none focus:outline-none'
+                      rows={4}
+                    />
+                    <div className='row-flex gap-2'>
+                      <Button 
+                        className='bg-foreground text-background flex-1 p-3!'
+                        onClick={handleSubmitNote}
+                        disabled={isSubmitting}
+                      >
+                        <span>{isSubmitting ? 'Saving...' : 'Submit edits'}</span>
+                      </Button>
+                      <Button 
+                        className='bg-background text-foreground border border-foreground flex-1 p-3!'
+                        onClick={handleCancelNote}
+                        disabled={isSubmitting}
+                      >
+                        <span>Cancel</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : noteToDelete === note.id ? (
-                /* Delete confirmation modal */
-                <div className='bg-foreground rounded-lg p-6 col-flex gap-6 items-center justify-center'>
-                  <p className='text-background text-center'>
-                    Are you sure you want to delete this note ?
-                  </p>
-                  <div className='row-flex gap-2 w-full'>
-                    <Button 
-                      className='bg-background text-foreground border border-foreground flex-1 p-3!'
-                      onClick={handleCancelDelete}
-                    >
-                      <span>No, cancel</span>
-                    </Button>
-                    <Button 
-                      className='bg-foreground border border-background text-background flex-1 p-3!'
-                      onClick={handleConfirmDelete}
-                    >
-                      <span>Yes, delete</span>
-                    </Button>
+                ) : noteToDelete === note.id ? (
+                  /* Delete confirmation modal */
+                  <div className='bg-foreground rounded-lg p-6 col-flex gap-6 items-center justify-center'>
+                    <p className='text-background text-center'>
+                      Are you sure you want to delete this note ?
+                    </p>
+                    <div className='row-flex gap-2 w-full'>
+                      <Button 
+                        className='bg-background text-foreground border border-foreground flex-1 p-3!'
+                        onClick={handleCancelDelete}
+                      >
+                        <span>No, cancel</span>
+                      </Button>
+                      <Button 
+                        className='bg-foreground border border-background text-background flex-1 p-3!'
+                        onClick={handleConfirmDelete}
+                      >
+                        <span>Yes, delete</span>
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <p className='text-sm xl:text-base xl:mb-6'>{note.text}</p>
-                  <div className='row-flex gap-2 xl:flex-col!'>
-                    <Button 
-                      className='bg-background text-foreground border border-foreground px-3 py-1 flex-1'
-                      onClick={() => handleEditNote(note.id)}
-                    >
-                      <span>Edit</span>
-                    </Button>
-                    <Button 
-                      className='bg-background text-foreground border border-foreground px-3 py-1 flex-1'
-                      onClick={() => handleDeleteNote(note.id)}
-                    >
-                      <span>Delete</span>
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+                ) : (
+                  <>
+                    <p className='text-sm xl:text-base xl:mb-6'>{note.content}</p>
+                    <div className='row-flex gap-2 xl:flex-col!'>
+                      <Button 
+                        className='bg-background text-foreground border border-foreground px-3 py-1 flex-1'
+                        onClick={() => handleEditNote(note.id)}
+                      >
+                        <span>Edit</span>
+                      </Button>
+                      <Button 
+                        className='bg-background text-foreground border border-foreground px-3 py-1 flex-1'
+                        onClick={() => handleDeleteNote(note.id)}
+                      >
+                        <span>Delete</span>
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
