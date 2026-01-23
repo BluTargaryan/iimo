@@ -1,15 +1,41 @@
-import React from 'react'
+'use client'
+
+import React, { useEffect, useRef } from 'react'
 import Button from '../atoms/Button';
 
-const Notifications = () => {
+interface NotificationsProps {
+  onClose: () => void
+}
+
+const Notifications = ({ onClose }: NotificationsProps) => {
+  const notificationsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        onClose()
+      }
+    }
+
+    // Add event listener
+    document.addEventListener('mousedown', handleClickOutside)
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [onClose])
+
   return (
-    <div className='col-flex gap-8 px-5 py-8 bg-background rounded-lg border-2 border-foreground fixed top-30 inset-x-4
+    <div 
+      ref={notificationsRef}
+      className='col-flex gap-8 px-5 py-8 bg-background rounded-lg border-2 border-foreground fixed top-30 inset-x-4
     
     md:inset-x-10 md:top-20
     xl:inset-x-0 xl:max-w-[1144px] xl:mx-auto
     '>
         <h2>Notifications</h2>
-        <div className='col-flex gap-3 h-30 overflow-y-scroll mb-'>
+        <div className='col-flex gap-3 h-30 overflow-y-scroll xl:h-50'>
     {
         Array.from({ length: 10 }).map((_, index) => (
             <div key={index} className='col-flex gap-1'>

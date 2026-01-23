@@ -5,6 +5,7 @@ import Image from 'next/image'
 import logoutIcon from '@/app/assets/images/logout.svg'
 import Notifications from './Notifications'
 import { useAuth } from '@/app/contexts/AuthContext'
+import Link from 'next/link'
 
 const TopHeader = () => {
   const [showNotifications, setShowNotifications] = useState(false)
@@ -28,19 +29,19 @@ const TopHeader = () => {
         <span className='font-black xl:text-xl'>iimo</span>
 
         <span className='row-flex font-normal gap-3 text-sm md:gap-5 md:text-base'>
-            <span>Shoots</span>
-            <span>Clients</span>
+            <Link href="/studio/shoots" className='hover:underline'>Shoots</Link>
+            <Link href="/studio/clients" className='hover:underline'>Clients</Link>
         </span>
 
         <span className='row-flex font-normal gap-3 text-sm md:gap-5 md:text-base'>
-            <span onClick={handleNotifications}>Notifications</span>
-            <span className='row-flex gap-1 items-center cursor-pointer' onClick={handleLogout}>
-            <span>Logout</span>
+            <span onClick={handleNotifications} className='hover:underline'>Notifications</span>
+            <span className='row-flex gap-1 items-center cursor-pointer hover:underline' onClick={handleLogout}>
+            <span className=''>Logout</span>
             <Image src={logoutIcon} alt="logout" width={20} height={20} className='w-3 h-auto'/>
             </span>
         </span>
     </header>
-    {showNotifications && <Notifications />}
+    {showNotifications && <Notifications onClose={() => setShowNotifications(false)} />}
     </>
   )
 }

@@ -193,7 +193,7 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
                 onClick={handleSubmitNote}
                 disabled={isSubmitting || !clientId}
               >
-                <span>{isSubmitting ? 'Saving...' : (noteText.trim() ? 'Submit edits' : 'Add note')}</span>
+                <span>{isSubmitting ? 'Saving...' : (noteText.trim() ? 'Submit note' : 'Add note')}</span>
               </Button>
               <Button 
                 className='bg-background text-foreground border border-foreground w-full p-3! xl:w-[238px]!'
@@ -215,12 +215,12 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
             <p>No notes yet. Add your first note above.</p>
           </div>
         ) : (
-          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:max-w-[956px] xl:mx-auto'>
+          <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:w-[956px] xl:mx-auto'>
             {notes.map((note) => (
-              <div key={note.id} className='col-flex gap-2 relative'>
+              <div key={note.id} className='col-flex gap-2 relative '>
                 {noteToEdit === note.id ? (
                   /* Edit note form */
-                  <div className='col-flex gap-4'>
+                  <div className='col-flex gap-4 '>
                     <textarea
                       value={noteText}
                       onChange={(e) => setNoteText(e.target.value)}
