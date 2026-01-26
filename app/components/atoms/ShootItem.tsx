@@ -3,12 +3,15 @@ import Image from 'next/image'
 import Button from './Button'
 import share from '@/app/assets/images/share.svg'
 import { useRouter } from 'next/navigation'
+import { type Shoot } from '@/app/utils/shootOperations'
 
 interface ShootItemProps {
+  shoot: Shoot
   onShare?: () => void
+  thumbnailUrls?: string[] // Optional: first few asset thumbnails
 }
 
-const ShootItem = ({ onShare }: ShootItemProps) => {
+const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
   const router = useRouter()
   
   const handleShare = () => {
@@ -17,25 +20,40 @@ const ShootItem = ({ onShare }: ShootItemProps) => {
     }
   }
 
+  const handleView = () => {
+    router.push(`/studio/shoots/${shoot.id}`)
+  }
+
+  // Use provided thumbnails or placeholder
+  const displayThumbnails = thumbnailUrls && thumbnailUrls.length > 0 
+    ? thumbnailUrls.slice(0, 4) 
+    : Array(4).fill('https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb')
+
   return (
     <div className='col-flex gap-2 md:gap-4'>
-        <h2>Title</h2>
-        <span className='font-normal md:text-xl'>Description</span>
+        <h2>{shoot.title || 'Untitled Shoot'}</h2>
 
         <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
-
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
-        <Image src='https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb' alt='shoot-item' width={300} height={300} className='w-full h-full object-cover border-2 rounded-lg border-foreground' />
+          {displayThumbnails.map((src, index) => (
+            <Image 
+              key={index}
+              src={src} 
+              alt={`shoot-item-${index}`} 
+              width={300} 
+              height={300} 
+              className='w-full h-full object-cover border-2 rounded-lg border-foreground' 
+            />
+          ))}
         </div>
 
         <div className='row-flex gap-4.5'>
-<Button className='bg-foreground text-background w-full p-3!' onClick={() => router.push('/studio/shoot/1')}>View</Button>
-<Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
-    <span>Share</span>
-    <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
-</Button>
+          <Button className='bg-foreground text-background w-full p-3!' onClick={handleView}>
+            View
+          </Button>
+          <Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
+            <span>Share</span>
+            <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
+          </Button>
         </div>
     </div>
   )

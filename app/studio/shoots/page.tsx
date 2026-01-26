@@ -1,16 +1,42 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/app/contexts/AuthContext'
+import { fetchShoots, type Shoot } from '@/app/utils/shootOperations'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import Toast from '@/app/components/sections/Toast'
 
 
 const Shoots = () => {
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('Active')
   const [showToast, setShowToast] = useState(false)
+  const [shoots, setShoots] = useState<Shoot[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const tabs = ['Active', 'Expiring', 'Expired']
+  const tabs = ['Active', 'Expiring', 'Expired', 'Archived']
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    const loadShoots = async () => {
+      setLoading(true)
+      setError(null)
+      const { data, error: fetchError } = await fetchShoots(user.id, activeTab as 'Active' | 'Expiring' | 'Expired' | 'Archived')
+      
+      if (fetchError) {
+        setError(fetchError.message)
+        setShoots([])
+      } else {
+        setShoots(data || [])
+      }
+      setLoading(false)
+    }
+
+    loadShoots()
+  }, [user?.id, activeTab])
 
   const handleShare = () => {
     setShowToast(true)
@@ -31,20 +57,32 @@ xl:pb-4 xl:mb-22
     <span
       key={tab}
       onClick={() => setActiveTab(tab)}
-      className={`text-xl xl:text-3xl ${activeTab === tab ? 'font-bold' : ''}`}
+      className={`text-xl xl:text-3xl cursor-pointer ${activeTab === tab ? 'font-bold' : ''}`}
     >
       {tab}
     </span>
   ))}
 </div>
 
-
-<div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
-  <ShootItem onShare={handleShare} />
-  <ShootItem onShare={handleShare} />
-  <ShootItem onShare={handleShare} />
-
-</div>
+{loading ? (
+  <div className='col-flex items-center justify-center py-12'>
+    <span>Loading shoots...</span>
+  </div>
+) : error ? (
+  <div className='col-flex items-center justify-center py-12'>
+    <span className='text-red-500'>Error: {error}</span>
+  </div>
+) : shoots.length === 0 ? (
+  <div className='col-flex items-center justify-center py-12'>
+    <span>No shoots found</span>
+  </div>
+) : (
+  <div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
+    {shoots.map((shoot) => (
+      <ShootItem key={shoot.id} shoot={shoot} onShare={handleShare} />
+    ))}
+  </div>
+)}
 <AddShootClientFixed/>
 <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>

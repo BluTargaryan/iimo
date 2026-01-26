@@ -14,6 +14,7 @@ import {
   type Client,
   type Note,
 } from '@/app/utils/clientOperations'
+import { fetchShootsByClient, type Shoot } from '@/app/utils/shootOperations'
 import Button from '@/app/components/atoms/Button'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
@@ -32,6 +33,8 @@ const ClientPage = ({ params }: ClientPageProps) => {
   const { user } = useAuth()
   const [client, setClient] = useState<Client | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
+  const [shoots, setShoots] = useState<Shoot[]>([])
+  const [shootsLoading, setShootsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeShootTab, setActiveShootTab] = useState('Active')
@@ -44,7 +47,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
   const [isArchiving, setIsArchiving] = useState(false)
   const [showToast, setShowToast] = useState(false)
 
-  const shootTabs = ['Active', 'Expiring', 'Expired']
+  const shootTabs = ['Active', 'Expiring', 'Expired', 'Archived']
 
   // Fetch client and notes on mount
   useEffect(() => {
@@ -74,6 +77,29 @@ const ClientPage = ({ params }: ClientPageProps) => {
 
     loadData()
   }, [id])
+
+  // Fetch shoots when client is loaded and tab changes
+  useEffect(() => {
+    if (!client?.id) return
+
+    const loadShoots = async () => {
+      setShootsLoading(true)
+      const { data, error: fetchError } = await fetchShootsByClient(
+        client.id,
+        activeShootTab as 'Active' | 'Expiring' | 'Expired' | 'Archived'
+      )
+      
+      if (fetchError) {
+        console.error('Error fetching shoots:', fetchError)
+        setShoots([])
+      } else {
+        setShoots(data || [])
+      }
+      setShootsLoading(false)
+    }
+
+    loadShoots()
+  }, [client?.id, activeShootTab])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -417,11 +443,21 @@ const ClientPage = ({ params }: ClientPageProps) => {
         </div>
 
         {/* Shoots Grid */}
-        <div className='grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3'>
-          <ShootItem onShare={handleShare} />
-          <ShootItem onShare={handleShare} />
-          <ShootItem onShare={handleShare} />
-        </div>
+        {shootsLoading ? (
+          <div className='col-flex items-center justify-center py-12'>
+            <span>Loading shoots...</span>
+          </div>
+        ) : shoots.length === 0 ? (
+          <div className='col-flex items-center justify-center py-12'>
+            <span>No shoots found</span>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3'>
+            {shoots.map((shoot) => (
+              <ShootItem key={shoot.id} shoot={shoot} onShare={handleShare} />
+            ))}
+          </div>
+        )}
       </div>
 
       <ArchiveConfirmationModal 

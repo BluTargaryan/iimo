@@ -54,95 +54,131 @@ const styles = StyleSheet.create({
   },
 })
 
+import { type ShootWithClient } from '@/app/utils/shootOperations'
+import { type UsageRights } from '@/app/utils/usageRightsOperations'
+
 interface UsageRightsPDFProps {
-  shootData: {
-    title: string
-    client: string
-    doneDate: string
-    deliveredDate: string
-    expiryDate: string
-    description: string
+  shootData: ShootWithClient
+  usageRights?: UsageRights
+}
+
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return dateString
   }
 }
 
-const UsageRightsPDF = ({ shootData }: UsageRightsPDFProps) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <Text style={styles.title}>Usage Rights</Text>
-      
-      {/* Project Details Section */}
-      <View style={styles.section}>
-        <Text style={styles.heading}>Project Details</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Title:</Text>
-          <Text>{shootData.title}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Client:</Text>
-          <Text>{shootData.client}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Date Completed:</Text>
-          <Text>{shootData.doneDate}</Text>
-        </View>
-        <View style={styles.row}>
-          <Text style={styles.label}>Delivered:</Text>
-          <Text>{shootData.deliveredDate}</Text>
-        </View>
-      </View>
-      
-      {/* Usage Terms Section */}
-      <View style={styles.section}>
-        <Text style={styles.heading}>Usage Terms</Text>
-        <View style={styles.row}>
-          <Text style={styles.label}>Expiry Date:</Text>
-          <Text style={{ fontWeight: 'bold' }}>{shootData.expiryDate}</Text>
-        </View>
-        <Text style={styles.subheading}>Description:</Text>
-        <Text style={styles.text}>{shootData.description}</Text>
-      </View>
-
-      {/* Rights and Restrictions Section */}
-      <View style={styles.section}>
-        <Text style={styles.heading}>Rights and Restrictions</Text>
+const UsageRightsPDF = ({ shootData, usageRights }: UsageRightsPDFProps) => {
+  const clientName = shootData.clients?.name || 'Unknown Client'
+  
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.title}>Usage Rights</Text>
         
-        <Text style={styles.subheading}>Granted Rights:</Text>
-        <Text style={styles.listItem}>• Right to use images for marketing and promotional purposes</Text>
-        <Text style={styles.listItem}>• Right to display images on digital platforms and websites</Text>
-        <Text style={styles.listItem}>• Right to use images in print materials</Text>
+        {/* Project Details Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Project Details</Text>
+          <View style={styles.row}>
+            <Text style={styles.label}>Title:</Text>
+            <Text>{shootData.title}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Client:</Text>
+            <Text>{clientName}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Date Completed:</Text>
+            <Text>{formatDate(shootData.shoot_date)}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Status:</Text>
+            <Text>{shootData.status.charAt(0).toUpperCase() + shootData.status.slice(1)}</Text>
+          </View>
+        </View>
         
-        <Text style={styles.subheading}>Restrictions:</Text>
-        <Text style={styles.listItem}>• Images may not be resold or redistributed without permission</Text>
-        <Text style={styles.listItem}>• Images may not be used for defamatory or illegal purposes</Text>
-        <Text style={styles.listItem}>• Usage rights expire on {shootData.expiryDate}</Text>
-      </View>
+        {/* Usage Terms Section */}
+        {usageRights && (
+          <View style={styles.section}>
+            <Text style={styles.heading}>Usage Terms</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Usage Type:</Text>
+              <Text>{usageRights.usage_type}</Text>
+            </View>
+            {usageRights.start_date && (
+              <View style={styles.row}>
+                <Text style={styles.label}>Start Date:</Text>
+                <Text>{formatDate(usageRights.start_date)}</Text>
+              </View>
+            )}
+            {usageRights.end_date && (
+              <View style={styles.row}>
+                <Text style={styles.label}>End Date:</Text>
+                <Text style={{ fontWeight: 'bold' }}>{formatDate(usageRights.end_date)}</Text>
+              </View>
+            )}
+            {usageRights.restrictions && (
+              <>
+                <Text style={styles.subheading}>Restrictions:</Text>
+                <Text style={styles.text}>{usageRights.restrictions}</Text>
+              </>
+            )}
+          </View>
+        )}
 
-      {/* Additional Terms Section */}
-      <View style={styles.section}>
-        <Text style={styles.heading}>Additional Terms</Text>
-        <Text style={styles.paragraph}>
-          All usage rights are subject to the terms and conditions outlined in the original agreement. 
-          Any unauthorized use beyond the scope of these rights may result in legal action.
-        </Text>
-        <Text style={styles.paragraph}>
-          For questions regarding usage rights or to request extensions, please contact the 
-          original photographer or licensing agent.
-        </Text>
-      </View>
-    </Page>
-  </Document>
-)
+        {/* Rights and Restrictions Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Rights and Restrictions</Text>
+          
+          {usageRights ? (
+            <>
+              <Text style={styles.subheading}>Usage Type:</Text>
+              <Text style={styles.text}>{usageRights.usage_type}</Text>
+              {usageRights.end_date && (
+                <Text style={styles.listItem}>• Usage rights expire on {formatDate(usageRights.end_date)}</Text>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.subheading}>Granted Rights:</Text>
+              <Text style={styles.listItem}>• Right to use images for marketing and promotional purposes</Text>
+              <Text style={styles.listItem}>• Right to display images on digital platforms and websites</Text>
+              <Text style={styles.listItem}>• Right to use images in print materials</Text>
+              
+              <Text style={styles.subheading}>Restrictions:</Text>
+              <Text style={styles.listItem}>• Images may not be resold or redistributed without permission</Text>
+              <Text style={styles.listItem}>• Images may not be used for defamatory or illegal purposes</Text>
+            </>
+          )}
+        </View>
+
+        {/* Additional Terms Section */}
+        <View style={styles.section}>
+          <Text style={styles.heading}>Additional Terms</Text>
+          <Text style={styles.paragraph}>
+            All usage rights are subject to the terms and conditions outlined in the original agreement. 
+            Any unauthorized use beyond the scope of these rights may result in legal action.
+          </Text>
+          <Text style={styles.paragraph}>
+            For questions regarding usage rights or to request extensions, please contact the 
+            original photographer or licensing agent.
+          </Text>
+        </View>
+      </Page>
+    </Document>
+  )
+}
 
 // Function to download PDF
-export const downloadUsageRightsPDF = async (shootData: {
-  title: string
-  client: string
-  doneDate: string
-  deliveredDate: string
-  expiryDate: string
-  description: string
-}) => {
-  const doc = <UsageRightsPDF shootData={shootData} />
+export const downloadUsageRightsPDF = async (
+  shootData: ShootWithClient,
+  usageRights?: UsageRights
+) => {
+  const doc = <UsageRightsPDF shootData={shootData} usageRights={usageRights} />
   const blob = await pdf(doc).toBlob()
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')

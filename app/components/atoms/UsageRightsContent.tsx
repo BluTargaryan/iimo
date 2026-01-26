@@ -1,17 +1,24 @@
 import React from 'react'
+import { type ShootWithClient } from '@/app/utils/shootOperations'
+import { type UsageRights } from '@/app/utils/usageRightsOperations'
 
 interface UsageRightsContentProps {
-  shootData: {
-    title: string
-    client: string
-    doneDate: string
-    deliveredDate: string
-    expiryDate: string
-    description: string
+  shootData: ShootWithClient
+  usageRights?: UsageRights
+}
+
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return 'N/A'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  } catch {
+    return dateString
   }
 }
 
-const UsageRightsContent = ({ shootData }: UsageRightsContentProps) => {
+const UsageRightsContent = ({ shootData, usageRights }: UsageRightsContentProps) => {
+  const clientName = shootData.clients?.name || 'Unknown Client'
   return (
     <div className='col-flex gap-8'>
       <div>
@@ -28,15 +35,15 @@ const UsageRightsContent = ({ shootData }: UsageRightsContentProps) => {
           </div>
           <div className='row-flex gap-2'>
             <span className='font-semibold'>Client:</span>
-            <span>{shootData.client}</span>
+            <span>{clientName}</span>
           </div>
           <div className='row-flex gap-2'>
             <span className='font-semibold'>Date Completed:</span>
-            <span>{shootData.doneDate}</span>
+            <span>{formatDate(shootData.shoot_date)}</span>
           </div>
           <div className='row-flex gap-2'>
-            <span className='font-semibold'>Delivered:</span>
-            <span>{shootData.deliveredDate}</span>
+            <span className='font-semibold'>Status:</span>
+            <span>{shootData.status.charAt(0).toUpperCase() + shootData.status.slice(1)}</span>
           </div>
         </div>
       </div>
@@ -45,14 +52,26 @@ const UsageRightsContent = ({ shootData }: UsageRightsContentProps) => {
       <div className='col-flex gap-4'>
         <h3 className='text-xl xl:text-2xl font-semibold'>Usage Terms</h3>
         <div className='col-flex gap-3 text-sm xl:text-base'>
-          <div className='row-flex gap-2'>
-            <span className='font-semibold'>Expiry Date:</span>
-            <span className='font-bold'>{shootData.expiryDate}</span>
-          </div>
-          <div className='col-flex gap-2'>
-            <span className='font-semibold'>Description:</span>
-            <p className='font-normal'>{shootData.description}</p>
-          </div>
+          {usageRights && (
+            <>
+              <div className='row-flex gap-2'>
+                <span className='font-semibold'>Usage Type:</span>
+                <span>{usageRights.usage_type}</span>
+              </div>
+              {usageRights.start_date && (
+                <div className='row-flex gap-2'>
+                  <span className='font-semibold'>Start Date:</span>
+                  <span>{formatDate(usageRights.start_date)}</span>
+                </div>
+              )}
+              {usageRights.end_date && (
+                <div className='row-flex gap-2'>
+                  <span className='font-semibold'>End Date:</span>
+                  <span className='font-bold'>{formatDate(usageRights.end_date)}</span>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -60,22 +79,43 @@ const UsageRightsContent = ({ shootData }: UsageRightsContentProps) => {
       <div className='col-flex gap-4'>
         <h3 className='text-xl xl:text-2xl font-semibold'>Rights and Restrictions</h3>
         <div className='col-flex gap-3 text-sm xl:text-base'>
-          <div>
-            <h4 className='font-semibold mb-2'>Granted Rights:</h4>
-            <ul className='list-disc list-inside col-flex gap-1 ml-4'>
-              <li>Right to use images for marketing and promotional purposes</li>
-              <li>Right to display images on digital platforms and websites</li>
-              <li>Right to use images in print materials</li>
-            </ul>
-          </div>
-          <div>
-            <h4 className='font-semibold mb-2'>Restrictions:</h4>
-            <ul className='list-disc list-inside col-flex gap-1 ml-4'>
-              <li>Images may not be resold or redistributed without permission</li>
-              <li>Images may not be used for defamatory or illegal purposes</li>
-              <li>Usage rights expire on {shootData.expiryDate}</li>
-            </ul>
-          </div>
+          {usageRights ? (
+            <>
+              <div>
+                <h4 className='font-semibold mb-2'>Usage Type:</h4>
+                <p>{usageRights.usage_type}</p>
+              </div>
+              {usageRights.restrictions && (
+                <div>
+                  <h4 className='font-semibold mb-2'>Restrictions:</h4>
+                  <p className='whitespace-pre-line'>{usageRights.restrictions}</p>
+                </div>
+              )}
+              {usageRights.end_date && (
+                <div>
+                  <h4 className='font-semibold mb-2'>Expiry:</h4>
+                  <p>Usage rights expire on {formatDate(usageRights.end_date)}</p>
+                </div>
+              )}
+              {usageRights.contract && (
+                <div>
+                  <h4 className='font-semibold mb-2'>Contract:</h4>
+                  <a 
+                    href={usageRights.contract} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className='text-blue-600 underline'
+                  >
+                    View Contract PDF
+                  </a>
+                </div>
+              )}
+            </>
+          ) : (
+            <div>
+              <p>No usage rights defined for this shoot.</p>
+            </div>
+          )}
         </div>
       </div>
 
