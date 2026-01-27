@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
-import { fetchAssets, deleteAsset, getAssetUrl, type Asset } from '@/app/utils/assetOperations'
+import { fetchAssets, deleteAsset, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
 import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import PDFViewer from '@/app/components/atoms/PDFViewer'
@@ -12,6 +13,7 @@ import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConf
 import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 import Toast from '@/app/components/sections/Toast'
+import share from '@/app/assets/images/share.svg'
 
 interface ShootPageProps {
   params: Promise<{
@@ -36,6 +38,12 @@ const ShootPage = ({ params }: ShootPageProps) => {
   const [toastMessage, setToastMessage] = useState('')
 
   const tabs = ['Images', 'Usage Document', 'Usage Rights']
+
+  // Reset toast state on mount to prevent showing toast from previous navigation
+  useEffect(() => {
+    setShowToast(false)
+    setToastMessage('')
+  }, [id])
 
   // Fetch shoot data on mount
   useEffect(() => {
@@ -157,6 +165,61 @@ const ShootPage = ({ params }: ShootPageProps) => {
     router.push(`/studio/add-rights?shootId=${id}`)
   }
 
+  const handleSharePreview = async () => {
+    try {
+      const previewUrl = `${window.location.origin}/preview/${id}`
+      await navigator.clipboard.writeText(previewUrl)
+      setToastMessage('Preview link copied to clipboard')
+      setShowToast(true)
+    } catch (error) {
+      console.error('Failed to copy link:', error)
+      setError('Failed to copy preview link')
+    }
+  }
+
+  const handleDownloadAllImages = async () => {
+    if (assets.length === 0) return
+
+    for (let i = 0; i < assets.length; i++) {
+      const asset = assets[i]
+      // Use watermarked image if available, otherwise fall back to regular image
+      const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
+      
+      try {
+        // Fetch the image
+        const response = await fetch(imageUrl)
+        const blob = await response.blob()
+        
+        // Create a temporary URL for the blob
+        const blobUrl = URL.createObjectURL(blob)
+        
+        // Extract filename from URL or use asset ID
+        const urlParts = imageUrl.split('/')
+        const urlFilename = urlParts[urlParts.length - 1].split('?')[0]
+        const filename = urlFilename || `asset-${asset.id}.jpg`
+        
+        // Create a temporary anchor element and trigger download
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        
+        // Clean up
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+        
+        // Small delay between downloads to prevent browser blocking
+        if (i < assets.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 200))
+        }
+      } catch (error) {
+        console.error(`Error downloading image ${asset.id}:`, error)
+        // Continue with next image even if one fails
+      }
+    }
+  }
+
   if (loading) {
     return (
       <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
@@ -192,6 +255,13 @@ const ShootPage = ({ params }: ShootPageProps) => {
             Status: {shootData.status.charAt(0).toUpperCase() + shootData.status.slice(1)}
           </span>
         </div>
+        <Button 
+          className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
+          onClick={handleSharePreview}
+        >
+          <span>Share to client</span>
+          <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
+        </Button>
       </div>
 
       
@@ -244,19 +314,27 @@ const ShootPage = ({ params }: ShootPageProps) => {
           ) : (
             <>
               <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
-                {assets.map((asset) => (
-                  <ImageGridItem 
-                    key={asset.id}
-                    src={getAssetUrl(asset.image)}
-                    alt={`Asset ${asset.id}`}
-                    onDelete={() => handleDeleteImage(asset.id)}
-                  />
-                ))}
+                {assets.map((asset) => {
+                  // Use watermarked image if available, otherwise fall back to regular image
+                  const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
+                  return (
+                    <ImageGridItem 
+                      key={asset.id}
+                      src={imageUrl}
+                      alt={`Asset ${asset.id}`}
+                      onDelete={() => handleDeleteImage(asset.id)}
+                    />
+                  )
+                })}
               </div>
 
               {/* Action Buttons */}
               <div className='row-flex gap-2'>
-                <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
+                <Button 
+                  className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
+                  onClick={handleDownloadAllImages}
+                  disabled={assets.length === 0}
+                >
                   Download images
                 </Button>
                 <Button 
@@ -341,7 +419,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
       />
-      <Toast isVisible={showToast} onClose={handleCloseToast} />
+      <Toast isVisible={showToast} onClose={handleCloseToast} message={toastMessage} />
     </main>
   )
 }

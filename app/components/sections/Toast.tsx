@@ -5,14 +5,15 @@ import React, { useEffect } from 'react'
 interface ToastProps {
   isVisible: boolean
   onClose: () => void
+  message?: string
 }
 
-const Toast = ({ isVisible, onClose }: ToastProps) => {
+const Toast = ({ isVisible, onClose, message = 'Client link copied to dashboard.' }: ToastProps) => {
   useEffect(() => {
     if (isVisible) {
       const timer = setTimeout(() => {
         onClose()
-      }, 10000) // 10 seconds
+      }, 10000) // 3 seconds
 
       return () => clearTimeout(timer)
     }
@@ -25,7 +26,7 @@ const Toast = ({ isVisible, onClose }: ToastProps) => {
       className='fixed bottom-25 right-5 z-50 p-4 flex flex-centerize h-11 border-2 rounded-3xl bg-background cursor-pointer'
       onClick={onClose}
     >
-      <span>Client link copied to dashboard.</span>
+      <span>{message}</span>
     </div>
   )
 }

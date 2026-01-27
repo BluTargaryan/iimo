@@ -7,7 +7,6 @@ import { compositeThumbnailOnPhoto } from '@/app/utils/imageCompositor'
 import PhotoUploadGrid from '@/app/components/atoms/PhotoUploadGrid'
 import ThumbnailUpload from '@/app/components/atoms/ThumbnailUpload'
 import Button from '@/app/components/atoms/Button'
-import Toast from '@/app/components/sections/Toast'
 
 const UploadAssetsPage = () => {
   const router = useRouter()
@@ -19,8 +18,6 @@ const UploadAssetsPage = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
     if (!shootId) {
@@ -83,13 +80,8 @@ const UploadAssetsPage = () => {
         return
       }
 
-      setToastMessage(`Successfully uploaded ${assets?.length || 0} asset(s)!`)
-      setShowToast(true)
-
-      // Navigate to shoot details page after a short delay
-      setTimeout(() => {
-        router.push(`/studio/shoots/${shootId}`)
-      }, 1500)
+      // Navigate to shoot details page
+      router.push(`/studio/shoots/${shootId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to upload assets')
       setLoading(false)
@@ -102,10 +94,6 @@ const UploadAssetsPage = () => {
     } else {
       router.back()
     }
-  }
-
-  const handleCloseToast = () => {
-    setShowToast(false)
   }
 
   return (
@@ -160,7 +148,6 @@ const UploadAssetsPage = () => {
           </Button>
         </div>
       </form>
-      <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
   )
 }

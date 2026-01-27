@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createUsageRights } from '@/app/utils/usageRightsOperations'
-import Select from '@/app/components/atoms/Select'
+import MultiSelect from '@/app/components/atoms/MultiSelect'
+import TextInput from '@/app/components/atoms/TextInput'
 import DateInput from '@/app/components/atoms/DateInput'
 import Textarea from '@/app/components/atoms/Textarea'
 import FileInput from '@/app/components/atoms/FileInput'
 import Button from '@/app/components/atoms/Button'
-import Toast from '@/app/components/sections/Toast'
 
 const AddRightsPage = () => {
   const router = useRouter()
@@ -17,7 +17,8 @@ const AddRightsPage = () => {
   const assetId = searchParams.get('assetId')
 
   const [formData, setFormData] = useState({
-    usage: '',
+    usage: [] as string[],
+    otherUsageText: '',
     startDate: '',
     endDate: '',
     restrictions: '',
@@ -25,10 +26,16 @@ const AddRightsPage = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
-  const usageOptions = ['Option 1', 'Option 2', 'Option 3', 'Other'] // TODO: Replace with actual options
+  const usageOptions = [
+    'Editorial',
+    'Commercial',
+    'Social Media',
+    'Print',
+    'Web/Digital',
+    'Unlimited',
+    'Other'
+  ]
 
   useEffect(() => {
     if (!shootId) {
@@ -41,6 +48,14 @@ const AddRightsPage = () => {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+    setError(null)
+  }
+
+  const handleUsageChange = (selectedValues: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      usage: selectedValues
     }))
     setError(null)
   }
@@ -70,8 +85,14 @@ const AddRightsPage = () => {
     }
 
     // Form validation
-    if (!formData.usage) {
-      setError('Usage type is required')
+    if (formData.usage.length === 0) {
+      setError('At least one usage type is required')
+      return
+    }
+
+    // If "Other" is selected, require otherUsageText
+    if (formData.usage.includes('Other') && !formData.otherUsageText.trim()) {
+      setError('Please specify the custom usage type')
       return
     }
 
@@ -98,27 +119,78 @@ const AddRightsPage = () => {
     setLoading(true)
 
     try {
-      const { data: newRights, error: createError } = await createUsageRights(shootId, {
-        usage_type: formData.usage,
-        start_date: formData.startDate || null,
-        end_date: formData.endDate || null,
-        restrictions: formData.restrictions || null,
-        contract: formData.contract,
+      // Upload contract once if provided (will be reused for all records)
+      let contractUrl: string | null = null
+      if (formData.contract) {
+        const { uploadContract } = await import('@/app/utils/usageRightsOperations')
+        const { data: uploadedUrl, error: uploadError } = await uploadContract(shootId, formData.contract)
+        if (uploadError) {
+          setError(uploadError.message)
+          setLoading(false)
+          return
+        }
+        contractUrl = uploadedUrl
+      }
+
+      // Prepare usage types array (one per selected option)
+      const usageTypes: string[] = []
+      formData.usage.forEach(opt => {
+        if (opt !== 'Other') {
+          usageTypes.push(opt)
+        } else if (formData.otherUsageText.trim()) {
+          usageTypes.push(formData.otherUsageText.trim())
+        }
       })
 
-      if (createError) {
-        setError(createError.message)
+      // Create a record for each usage type using createUsageRights (which handles ownership verification)
+      const createPromises = usageTypes.map(usageType =>
+        createUsageRights(shootId, {
+          usage_type: usageType,
+          start_date: formData.startDate || null,
+          end_date: formData.endDate || null,
+          restrictions: formData.restrictions || null,
+          contract: null, // We'll update with the URL after creation
+        })
+      )
+
+      const results = await Promise.all(createPromises)
+      const errors = results.filter(r => r.error)
+      
+      if (errors.length > 0) {
+        // Clean up uploaded contract if any creation fails
+        if (contractUrl) {
+          const { supabase } = await import('@/app/utils/supabase')
+          const urlParts = contractUrl.split('/contracts/')
+          if (urlParts.length > 1) {
+            const filePath = `shoots/${shootId}/contracts/${urlParts[1]}`
+            await supabase.storage.from('contracts').remove([filePath])
+          }
+        }
+        setError(errors[0].error?.message || 'Failed to create some usage rights')
         setLoading(false)
         return
       }
 
-      setToastMessage('Usage rights created successfully!')
-      setShowToast(true)
+      // Update all created records with the contract URL if one was uploaded
+      if (contractUrl && results.length > 0) {
+        const { supabase } = await import('@/app/utils/supabase')
+        const createdIds = results.filter(r => r.data).map(r => r.data!.id)
+        
+        if (createdIds.length > 0) {
+          const { error: updateError } = await supabase
+            .from('usage_rights')
+            .update({ contract: contractUrl })
+            .in('id', createdIds)
+
+          if (updateError) {
+            console.error('Error updating contract URL:', updateError)
+            // Don't fail the whole operation if contract update fails
+          }
+        }
+      }
 
       // Navigate back to shoot details page
-      setTimeout(() => {
-        router.push(`/studio/shoots/${shootId}`)
-      }, 1000)
+      router.push(`/studio/shoots/${shootId}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create usage rights')
       setLoading(false)
@@ -133,10 +205,6 @@ const AddRightsPage = () => {
     }
   }
 
-  const handleCloseToast = () => {
-    setShowToast(false)
-  }
-
   return (
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>User rights</h1>
@@ -149,15 +217,27 @@ const AddRightsPage = () => {
 
       <form onSubmit={handleSubmit} className='w-full col-flex gap-6'>
         <div className="col-flex gap-6 mb-15">
-          <Select
+          <MultiSelect
             id="usage"
             name="usage"
             label="Usage"
-            placeholder="Pick an option"
+            placeholder="Pick options"
             options={usageOptions}
             value={formData.usage}
-            onChange={handleInputChange}
+            onChange={handleUsageChange}
           />
+
+          {formData.usage.includes('Other') && (
+            <TextInput
+              id="otherUsageText"
+              name="otherUsageText"
+              type="text"
+              label="Specify custom usage type"
+              placeholder="Enter custom usage type"
+              value={formData.otherUsageText}
+              onChange={handleInputChange}
+            />
+          )}
 
           <DateInput
             id="startDate"
@@ -215,7 +295,6 @@ const AddRightsPage = () => {
           </Button>
         </div>
       </form>
-      <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
   )
 }

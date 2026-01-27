@@ -10,7 +10,6 @@ import Select from '@/app/components/atoms/Select'
 import DateInput from '@/app/components/atoms/DateInput'
 import FileInput from '@/app/components/atoms/FileInput'
 import Button from '@/app/components/atoms/Button'
-import Toast from '@/app/components/sections/Toast'
 
 const AddShootPage = () => {
   const { user } = useAuth()
@@ -24,8 +23,6 @@ const AddShootPage = () => {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
 
   useEffect(() => {
     if (!user?.id) return
@@ -114,23 +111,14 @@ const AddShootPage = () => {
         return
       }
 
-      setToastMessage('Shoot created successfully!')
-      setShowToast(true)
-      
       // Navigate to shoot details page
       if (newShoot) {
-        setTimeout(() => {
-          router.push(`/studio/shoots/${newShoot.id}`)
-        }, 1000)
+        router.push(`/studio/shoots/${newShoot.id}`)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create shoot')
       setLoading(false)
     }
-  }
-
-  const handleCloseToast = () => {
-    setShowToast(false)
   }
 
   return (
@@ -192,7 +180,6 @@ const AddShootPage = () => {
           {loading ? 'Creating...' : 'Complete registration'}
         </Button>
       </form>
-      <Toast isVisible={showToast} onClose={handleCloseToast} />
     </main>
   )
 }
