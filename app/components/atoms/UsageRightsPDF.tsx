@@ -106,8 +106,8 @@ const UsageRightsPDF = ({ shootData, usageRights }: UsageRightsPDFProps) => {
           <View style={styles.section}>
             <Text style={styles.heading}>Usage Terms</Text>
             <View style={styles.row}>
-              <Text style={styles.label}>Usage Type:</Text>
-              <Text>{usageRights.usage_type}</Text>
+              <Text style={styles.label}>Usage Types:</Text>
+              <Text>{usageRights.usage_types.join(', ')}</Text>
             </View>
             {usageRights.start_date && (
               <View style={styles.row}>
@@ -136,8 +136,8 @@ const UsageRightsPDF = ({ shootData, usageRights }: UsageRightsPDFProps) => {
           
           {usageRights ? (
             <>
-              <Text style={styles.subheading}>Usage Type:</Text>
-              <Text style={styles.text}>{usageRights.usage_type}</Text>
+              <Text style={styles.subheading}>Usage Types:</Text>
+              <Text style={styles.text}>{usageRights.usage_types.join(', ')}</Text>
               {usageRights.end_date && (
                 <Text style={styles.listItem}>• Usage rights expire on {formatDate(usageRights.end_date)}</Text>
               )}

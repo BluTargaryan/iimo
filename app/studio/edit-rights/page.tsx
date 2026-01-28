@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createUsageRights } from '@/app/utils/usageRightsOperations'
+import { fetchUsageRights, updateUsageRights } from '@/app/utils/usageRightsOperations'
 import MultiSelect from '@/app/components/atoms/MultiSelect'
 import TextInput from '@/app/components/atoms/TextInput'
 import DateInput from '@/app/components/atoms/DateInput'
@@ -10,11 +10,11 @@ import Textarea from '@/app/components/atoms/Textarea'
 import FileInput from '@/app/components/atoms/FileInput'
 import Button from '@/app/components/atoms/Button'
 
-const AddRightsPage = () => {
+const EditRightsPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const shootId = searchParams.get('shootId')
-  const assetId = searchParams.get('assetId')
+  const rightsId = searchParams.get('rightsId')
 
   const [formData, setFormData] = useState({
     usage: [] as string[],
@@ -25,6 +25,7 @@ const AddRightsPage = () => {
     contract: null as File | null
   })
   const [loading, setLoading] = useState(false)
+  const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const usageOptions = [
@@ -37,11 +38,58 @@ const AddRightsPage = () => {
     'Other'
   ]
 
+  // Fetch existing usage rights data
   useEffect(() => {
-    if (!shootId) {
-      setError('Shoot ID is required')
+    if (!shootId || !rightsId) {
+      setError('Shoot ID and Rights ID are required')
+      setFetching(false)
+      return
     }
-  }, [shootId])
+
+    const loadUsageRights = async () => {
+      setFetching(true)
+      setError(null)
+      const { data, error: fetchError } = await fetchUsageRights(shootId)
+      
+      if (fetchError) {
+        setError(fetchError.message)
+        setFetching(false)
+        return
+      }
+
+      const rights = data?.find(r => r.id === rightsId)
+      if (!rights) {
+        setError('Usage rights not found')
+        setFetching(false)
+        return
+      }
+
+      // Pre-populate form with existing data
+      const usageTypes = rights.usage_types || []
+      const standardOptions: string[] = []
+      let otherText = ''
+
+      usageTypes.forEach(type => {
+        if (usageOptions.includes(type)) {
+          standardOptions.push(type)
+        } else {
+          otherText = type
+        }
+      })
+
+      setFormData({
+        usage: otherText ? [...standardOptions, 'Other'] : standardOptions,
+        otherUsageText: otherText,
+        startDate: rights.start_date || '',
+        endDate: rights.end_date || '',
+        restrictions: rights.restrictions || '',
+        contract: null // Don't pre-populate file input
+      })
+      setFetching(false)
+    }
+
+    loadUsageRights()
+  }, [shootId, rightsId])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -79,8 +127,8 @@ const AddRightsPage = () => {
     e.preventDefault()
     setError(null)
 
-    if (!shootId) {
-      setError('Shoot ID is required')
+    if (!shootId || !rightsId) {
+      setError('Shoot ID and Rights ID are required')
       return
     }
 
@@ -129,8 +177,8 @@ const AddRightsPage = () => {
         }
       })
 
-      // Create a single usage rights record with the array of usage types
-      const { data: newRights, error: createError } = await createUsageRights(shootId, {
+      // Update usage rights record
+      const { data: updatedRights, error: updateError } = await updateUsageRights(rightsId, {
         usage_types: usageTypes,
         start_date: formData.startDate || null,
         end_date: formData.endDate || null,
@@ -138,8 +186,8 @@ const AddRightsPage = () => {
         contract: formData.contract,
       })
 
-      if (createError) {
-        setError(createError.message)
+      if (updateError) {
+        setError(updateError.message)
         setLoading(false)
         return
       }
@@ -147,12 +195,12 @@ const AddRightsPage = () => {
       // Navigate back to shoot details page
       router.push(`/studio/shoots/${shootId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create usage rights')
+      setError(err instanceof Error ? err.message : 'Failed to update usage rights')
       setLoading(false)
     }
   }
 
-  const handleDoLater = () => {
+  const handleCancel = () => {
     if (shootId) {
       router.push(`/studio/shoots/${shootId}`)
     } else {
@@ -160,9 +208,19 @@ const AddRightsPage = () => {
     }
   }
 
+  if (fetching) {
+    return (
+      <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
+        <div className='col-flex items-center justify-center py-12'>
+          <span>Loading usage rights...</span>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
-      <h1 className='mb-28'>User rights</h1>
+      <h1 className='mb-28'>Edit User rights</h1>
 
       {error && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
@@ -236,17 +294,17 @@ const AddRightsPage = () => {
           <Button 
             type="submit" 
             className='bg-foreground text-background w-full p-3.5'
-            disabled={loading || !shootId}
+            disabled={loading || !shootId || !rightsId}
           >
-            {loading ? 'Creating...' : 'Setup rights'}
+            {loading ? 'Updating...' : 'Update rights'}
           </Button>
           <Button 
             type="button" 
             className='bg-background text-foreground border border-foreground w-full p-3.5'
-            onClick={handleDoLater}
+            onClick={handleCancel}
             disabled={loading}
           >
-            Do this later
+            Cancel
           </Button>
         </div>
       </form>
@@ -254,4 +312,4 @@ const AddRightsPage = () => {
   )
 }
 
-export default AddRightsPage
+export default EditRightsPage

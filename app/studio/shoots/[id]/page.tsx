@@ -37,7 +37,19 @@ const ShootPage = ({ params }: ShootPageProps) => {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
 
-  const tabs = ['Images', 'Usage Document', 'Usage Rights']
+  // Check if any usage rights have a contract
+  const hasContract = usageRights.some(rights => rights.contract !== null && rights.contract !== undefined)
+  
+  // Filter tabs based on whether contract exists
+  const allTabs = ['Images', 'Usage Document', 'Usage Rights']
+  const tabs = hasContract ? allTabs : allTabs.filter(tab => tab !== 'Usage Document')
+  
+  // If active tab is "Usage Document" but no contract exists, switch to Images
+  useEffect(() => {
+    if (activeTab === 'Usage Document' && !hasContract) {
+      setActiveTab('Images')
+    }
+  }, [hasContract, activeTab])
 
   // Reset toast state on mount to prevent showing toast from previous navigation
   useEffect(() => {
@@ -163,6 +175,10 @@ const ShootPage = ({ params }: ShootPageProps) => {
 
   const handleAddUsageRights = () => {
     router.push(`/studio/add-rights?shootId=${id}`)
+  }
+
+  const handleEditUsageRights = (rightsId: string) => {
+    router.push(`/studio/edit-rights?shootId=${id}&rightsId=${rightsId}`)
   }
 
   const handleSharePreview = async () => {
@@ -350,18 +366,45 @@ const ShootPage = ({ params }: ShootPageProps) => {
       )}
 
       {/* Usage Document Tab Content */}
-      {activeTab === 'Usage Document' && (
-        <>
-          <div className='mb-8'>
-            <PDFViewer src='/documents/test.pdf' title='Usage Document' />
-          </div>
+      {activeTab === 'Usage Document' && (() => {
+        // Find the first usage rights with a contract
+        const rightsWithContract = usageRights.find(rights => rights.contract)
+        const contractUrl = rightsWithContract?.contract || null
 
-          {/* Download Agreement Button */}
-          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
-            Download agreement
-          </Button>
-        </>
-      )}
+        return (
+          <>
+            {contractUrl ? (
+              <>
+                <div className='mb-8'>
+                  <PDFViewer src={contractUrl} title='Usage Document' />
+                </div>
+
+                {/* Download Agreement Button */}
+                <Button 
+                  className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
+                  onClick={() => {
+                    if (contractUrl) {
+                      const link = document.createElement('a')
+                      link.href = contractUrl
+                      link.download = 'usage-agreement.pdf'
+                      link.target = '_blank'
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                    }
+                  }}
+                >
+                  Download agreement
+                </Button>
+              </>
+            ) : (
+              <div className='col-flex items-center justify-center py-12'>
+                <span>No contract available for this shoot</span>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* Usage Rights Tab Content */}
       {activeTab === 'Usage Rights' && (
@@ -395,20 +438,33 @@ const ShootPage = ({ params }: ShootPageProps) => {
           ) : (
             <>
               {usageRights.map((rights) => (
-                <UsageRightsContent 
-                  key={rights.id}
-                  shootData={shootData}
-                  usageRights={rights}
-                />
-              ))}
-              
-              {/* Download PDF Button */}
+                <div key={rights.id} className='col-flex gap-6'>
+                  <UsageRightsContent 
+                    shootData={shootData}
+                    usageRights={rights}
+                  />
+
+                  <div className='col-flex gap-2 xl:flex-row!'>
+{/* Edit Button */}
+<Button 
+                    className='bg-background text-foreground border border-foreground w-full p-3.5 md:w-[322px]'
+                    onClick={() => handleEditUsageRights(rights.id)}
+                  >
+                    Edit Usage Rights
+                  </Button>
+                  {/* Download PDF Button */}
               <Button 
                 className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
                 onClick={() => downloadUsageRightsPDF(shootData, usageRights[0])}
               >
                 Download Usage Rights as PDF
               </Button>
+                  </div>
+                  
+                </div>
+              ))}
+              
+              
             </>
           )}
         </div>

@@ -3,7 +3,7 @@ import { supabase } from './supabase'
 export interface UsageRights {
   id: string
   shoot_id: string
-  usage_type: string
+  usage_types: string[]
   start_date: string | null
   end_date: string | null
   restrictions: string | null
@@ -96,7 +96,7 @@ export async function uploadContract(
 export async function createUsageRights(
   shootId: string,
   data: {
-    usage_type: string
+    usage_types: string[]
     start_date?: string | null
     end_date?: string | null
     restrictions?: string | null
@@ -128,7 +128,7 @@ export async function createUsageRights(
       .from('usage_rights')
       .insert({
         shoot_id: shootId,
-        usage_type: data.usage_type,
+        usage_types: data.usage_types,
         start_date: data.start_date || null,
         end_date: data.end_date || null,
         restrictions: data.restrictions || null,
@@ -195,7 +195,7 @@ export async function fetchUsageRights(
 export async function updateUsageRights(
   rightsId: string,
   data: {
-    usage_type?: string
+    usage_types?: string[]
     start_date?: string | null
     end_date?: string | null
     restrictions?: string | null
@@ -245,8 +245,8 @@ export async function updateUsageRights(
       updated_at: new Date().toISOString(),
     }
 
-    if (data.usage_type !== undefined) {
-      updateData.usage_type = data.usage_type
+    if (data.usage_types !== undefined) {
+      updateData.usage_types = data.usage_types
     }
     if (data.start_date !== undefined) {
       updateData.start_date = data.start_date || null

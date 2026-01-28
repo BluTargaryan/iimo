@@ -55,8 +55,8 @@ const UsageRightsContent = ({ shootData, usageRights }: UsageRightsContentProps)
           {usageRights && (
             <>
               <div className='row-flex gap-2'>
-                <span className='font-semibold'>Usage Type:</span>
-                <span>{usageRights.usage_type}</span>
+                <span className='font-semibold'>Usage Types:</span>
+                <span>{usageRights.usage_types.join(', ')}</span>
               </div>
               {usageRights.start_date && (
                 <div className='row-flex gap-2'>
@@ -82,8 +82,8 @@ const UsageRightsContent = ({ shootData, usageRights }: UsageRightsContentProps)
           {usageRights ? (
             <>
               <div>
-                <h4 className='font-semibold mb-2'>Usage Type:</h4>
-                <p>{usageRights.usage_type}</p>
+                <h4 className='font-semibold mb-2'>Usage Types:</h4>
+                <p>{usageRights.usage_types.join(', ')}</p>
               </div>
               {usageRights.restrictions && (
                 <div>
