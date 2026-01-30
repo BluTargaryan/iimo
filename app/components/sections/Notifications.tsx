@@ -1,14 +1,75 @@
 'use client'
 
-import React, { useEffect, useRef } from 'react'
-import Button from '../atoms/Button';
+import React, { useEffect, useRef, useCallback, useState } from 'react'
+import Button from '../atoms/Button'
+import { useAuth } from '@/app/contexts/AuthContext'
+import {
+  fetchNotificationsWithShoot,
+  markNotificationAsRead,
+  getNotificationTypeLabel,
+  formatNotificationDate,
+  type NotificationWithRelations,
+} from '@/app/utils/notificationOperations'
 
 interface NotificationsProps {
   onClose: () => void
 }
 
+const PAGE_SIZE = 20
+
 const Notifications = ({ onClose }: NotificationsProps) => {
   const notificationsRef = useRef<HTMLDivElement>(null)
+  const { user } = useAuth()
+  const [notifications, setNotifications] = useState<NotificationWithRelations[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [offset, setOffset] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+
+  const loadNotifications = useCallback(
+    async (isLoadMore = false) => {
+      if (!user?.id) return
+
+      if (isLoadMore) {
+        setLoadingMore(true)
+      } else {
+        setLoading(true)
+        setError(null)
+      }
+
+      const currentOffset = isLoadMore ? offset : 0
+      const { data, error: fetchError } = await fetchNotificationsWithShoot(user.id, {
+        limit: PAGE_SIZE,
+        offset: currentOffset,
+      })
+
+      if (fetchError) {
+        setError(fetchError.message)
+        if (!isLoadMore) setNotifications([])
+        setLoading(false)
+        setLoadingMore(false)
+        return
+      }
+
+      const list = data ?? []
+      if (isLoadMore) {
+        setNotifications((prev) => [...prev, ...list])
+        setOffset((prev) => prev + PAGE_SIZE)
+      } else {
+        setNotifications(list)
+        setOffset(PAGE_SIZE)
+      }
+      setHasMore(list.length === PAGE_SIZE)
+      setLoading(false)
+      setLoadingMore(false)
+    },
+    [user?.id, offset]
+  )
+
+  useEffect(() => {
+    loadNotifications()
+  }, [user?.id])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -17,42 +78,89 @@ const Notifications = ({ onClose }: NotificationsProps) => {
       }
     }
 
-    // Add event listener
     document.addEventListener('mousedown', handleClickOutside)
-
-    // Cleanup
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [onClose])
 
-  return (
-    <div 
-      ref={notificationsRef}
-      className='col-flex gap-8 px-5 py-8 bg-background rounded-lg border-2 border-foreground fixed top-30 inset-x-4
-    
-    md:inset-x-10 md:top-20
-    xl:inset-x-0 xl:max-w-[1144px] xl:mx-auto
-    '>
-        <h2>Notifications</h2>
-        <div className='col-flex gap-3 h-30 overflow-y-scroll xl:h-50'>
-    {
-        Array.from({ length: 10 }).map((_, index) => (
-            <div key={index} className='col-flex gap-1'>
-    <div className='col-flex gap-1'>
-<span>Qorem ipsum dolor sit amet, consectetur adipiscing elit.</span>
-<span className='text-xs'>Sent at mm/dd/yyyy</span>
-    </div>
-        </div>
-    ))}
-    
-    </div>
-    <Button className='border border-foreground text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize'>
-    <span>Load more</span>
-</Button>
-    
-    </div>
-  );
-};
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) loadNotifications(true)
+  }
 
-export default Notifications;
+  const handleNotificationClick = async (n: NotificationWithRelations) => {
+    if (n.status === 'read' || n.status === 'archived') return
+    const { error: updateError } = await markNotificationAsRead(n.id)
+    if (!updateError) {
+      setNotifications((prev) =>
+        prev.map((item) => (item.id === n.id ? { ...item, status: 'read' as const } : item))
+      )
+    }
+  }
+
+  return (
+    <div
+      ref={notificationsRef}
+      className="col-flex gap-8 px-5 py-8 bg-background rounded-lg border-2 border-foreground fixed z-50 top-30 inset-x-4
+        md:inset-x-10 md:top-20
+        xl:inset-x-0 xl:max-w-[1144px] xl:mx-auto"
+    >
+      <h2>Notifications</h2>
+
+      <div className="col-flex gap-3 h-30 overflow-y-scroll xl:h-50">
+        {loading ? (
+          <div className="col-flex items-center justify-center py-8">
+            <span className="text-sm">Loading notifications...</span>
+          </div>
+        ) : error ? (
+          <div className="col-flex items-center justify-center py-8">
+            <span className="text-sm text-red-500">Error: {error}</span>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="col-flex items-center justify-center py-8">
+            <span className="text-sm">No notifications yet.</span>
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <div
+              key={n.id}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleNotificationClick(n)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  handleNotificationClick(n)
+                }
+              }}
+              className={`col-flex gap-1 p-2 rounded-lg border cursor-pointer transition-colors ${
+                n.status === 'read' || n.status === 'archived'
+                  ? 'border-foreground/30 bg-foreground/5'
+                  : 'border-foreground bg-foreground/10'
+              }`}
+            >
+              <span className="text-sm font-medium">
+                {getNotificationTypeLabel(n.type)}
+                {n.shoots?.title ? ` — ${n.shoots.title}` : ''}
+              </span>
+              <span className="text-xs text-foreground/80">
+                Sent at {formatNotificationDate(n.sent_at)}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+
+      {!loading && !error && hasMore && notifications.length > 0 && (
+        <Button
+          type="button"
+          className="border border-foreground text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize"
+          onClick={handleLoadMore}
+          disabled={loadingMore}
+        >
+          <span>{loadingMore ? 'Loading...' : 'Load more'}</span>
+        </Button>
+      )}
+    </div>
+  )
+}
+
+export default Notifications
