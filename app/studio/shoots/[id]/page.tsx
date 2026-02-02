@@ -6,10 +6,12 @@ import Image from 'next/image'
 import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
 import { fetchAssets, deleteAsset, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
 import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
+import { generateShareLink, getShareLinkByShootId, revokeShareLink, type ShareLink } from '@/app/utils/shareLinksOperations'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
 import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConfirmationModal'
+import RevokeLinkConfirmationModal from '@/app/components/atoms/RevokeLinkConfirmationModal'
 import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 import Toast from '@/app/components/sections/Toast'
@@ -36,6 +38,9 @@ const ShootPage = ({ params }: ShootPageProps) => {
   const [error, setError] = useState<string | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [shareLink, setShareLink] = useState<ShareLink | null>(null)
+  const [shareLinkLoading, setShareLinkLoading] = useState(false)
+  const [showRevokeModal, setShowRevokeModal] = useState(false)
 
   // Check if any usage rights have a contract
   const hasContract = usageRights.some(rights => rights.contract !== null && rights.contract !== undefined)
@@ -75,6 +80,25 @@ const ShootPage = ({ params }: ShootPageProps) => {
     }
 
     loadShoot()
+  }, [id])
+
+  // Fetch active share link for this shoot when shoot is loaded
+  useEffect(() => {
+    if (!id) return
+    const loadShareLink = async () => {
+      setShareLinkLoading(true)
+      try {
+        const { data, error: linkError } = await getShareLinkByShootId(id)
+        if (!linkError) {
+          setShareLink(data ?? null)
+        } else {
+          setShareLink(null)
+        }
+      } finally {
+        setShareLinkLoading(false)
+      }
+    }
+    loadShareLink()
   }, [id])
 
   // Fetch assets on mount and when Images tab is active
@@ -183,14 +207,60 @@ const ShootPage = ({ params }: ShootPageProps) => {
 
   const handleSharePreview = async () => {
     try {
-      const previewUrl = `${window.location.origin}/preview/${id}`
-      await navigator.clipboard.writeText(previewUrl)
-      setToastMessage('Preview link copied to clipboard')
+      let shareUrl: string
+      if (shareLink) {
+        shareUrl = `${window.location.origin}/preview/${shareLink.share_token}`
+        await navigator.clipboard.writeText(shareUrl)
+        setToastMessage('Preview link copied to clipboard')
+        setShowToast(true)
+        return
+      }
+      const { data, error: genError } = await generateShareLink(id, 7)
+      if (genError) {
+        setError(genError.message)
+        setToastMessage(genError.message)
+        setShowToast(true)
+        return
+      }
+      if (!data) {
+        setToastMessage('Failed to generate share link')
+        setShowToast(true)
+        return
+      }
+      setShareLink(data.shareLink)
+      shareUrl = data.shareUrl
+      await navigator.clipboard.writeText(shareUrl)
+      setToastMessage('Share link created and copied to clipboard')
       setShowToast(true)
     } catch (error) {
       console.error('Failed to copy link:', error)
       setError('Failed to copy preview link')
+      setToastMessage('Failed to copy preview link')
+      setShowToast(true)
     }
+  }
+
+  const handleRevokeLink = () => {
+    setShowRevokeModal(true)
+  }
+
+  const handleConfirmRevoke = async () => {
+    if (!shareLink) return
+    const { error: revokeError } = await revokeShareLink(shareLink.id)
+    if (revokeError) {
+      setToastMessage(revokeError.message)
+      setShowToast(true)
+      setShowRevokeModal(false)
+      return
+    }
+    setShareLink(null)
+    setToastMessage('Share link revoked')
+    setShowToast(true)
+    setShowRevokeModal(false)
+  }
+
+  const handleCloseRevokeModal = () => {
+    setShowRevokeModal(false)
   }
 
   const handleDownloadAllImages = async () => {
@@ -271,13 +341,29 @@ const ShootPage = ({ params }: ShootPageProps) => {
             Status: {shootData.status.charAt(0).toUpperCase() + shootData.status.slice(1)}
           </span>
         </div>
-        <Button 
-          className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
-          onClick={handleSharePreview}
-        >
-          <span>Share to client</span>
-          <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
-        </Button>
+        <div className='col-flex gap-2'>
+          <Button 
+            className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
+            onClick={handleSharePreview}
+            disabled={shareLinkLoading}
+          >
+            <span>{shareLink ? 'Copy share link' : 'Share to client'}</span>
+            <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
+          </Button>
+          {shareLink && (
+            <>
+              <span className='text-sm text-placeholder'>
+                Share link active{shareLink.expires_at ? ` · Expires ${formatDate(shareLink.expires_at)}` : ''}
+              </span>
+              <Button 
+                className='bg-background text-foreground border border-foreground w-full p-3.5 md:w-[322px]'
+                onClick={handleRevokeLink}
+              >
+                Revoke link
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       
@@ -474,6 +560,11 @@ const ShootPage = ({ params }: ShootPageProps) => {
         isVisible={showDeleteModal}
         onClose={handleCloseDeleteModal}
         onConfirm={handleConfirmDelete}
+      />
+      <RevokeLinkConfirmationModal 
+        isVisible={showRevokeModal}
+        onClose={handleCloseRevokeModal}
+        onConfirm={handleConfirmRevoke}
       />
       <Toast isVisible={showToast} onClose={handleCloseToast} message={toastMessage} />
     </main>

@@ -1,52 +1,181 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect, use } from 'react'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
 import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
+import { getShootIdByToken } from '@/app/utils/shareLinksOperations'
+import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
+import { fetchAssets, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
+import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
 
 interface PreviewPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
+type ErrorType = 'not_found' | 'load_failed' | null
+
 const PreviewPage = ({ params }: PreviewPageProps) => {
+  const { id: shareToken } = use(params)
   const [activeTab, setActiveTab] = useState('Images')
-  
-  // Mock data - replace with actual data fetching
-  const shootData = {
-    title: 'Title',
-    client: 'client',
-    doneDate: 'mm/dd/yy',
-    deliveredDate: 'mm/dd/yy',
-    expiryDate: 'mm/dd/yy',
-    description: 'Porem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.',
-    usageDocumentUrl: undefined // Replace with actual PDF URL when available
+  const [shootData, setShootData] = useState<ShootWithClient | null>(null)
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [usageRights, setUsageRights] = useState<UsageRights[]>([])
+  const [loading, setLoading] = useState(true)
+  const [errorType, setErrorType] = useState<ErrorType>(null)
+
+  const hasContract = usageRights.some(rights => rights.contract !== null && rights.contract !== undefined)
+  const allTabs = ['Images', 'Usage Document', 'Usage Rights']
+  const tabs = hasContract ? allTabs : allTabs.filter(tab => tab !== 'Usage Document')
+
+  useEffect(() => {
+    if (activeTab === 'Usage Document' && !hasContract) {
+      setActiveTab('Images')
+    }
+  }, [hasContract, activeTab])
+
+  useEffect(() => {
+    if (!shareToken) {
+      setLoading(false)
+      setErrorType('not_found')
+      return
+    }
+
+    const load = async () => {
+      setLoading(true)
+      setErrorType(null)
+
+      const { data: shootId, error: tokenError } = await getShootIdByToken(shareToken)
+
+      if (tokenError || !shootId) {
+        setLoading(false)
+        setErrorType('not_found')
+        return
+      }
+
+      const [shootResult, assetsResult, rightsResult] = await Promise.all([
+        fetchShootById(shootId),
+        fetchAssets(shootId),
+        fetchUsageRights(shootId),
+      ])
+
+      if (shootResult.error || !shootResult.data) {
+        setLoading(false)
+        setErrorType('load_failed')
+        return
+      }
+
+      setShootData(shootResult.data)
+      setAssets(assetsResult.data ?? [])
+      setUsageRights(rightsResult.data ?? [])
+      setLoading(false)
+    }
+
+    load()
+  }, [shareToken])
+
+  const formatDate = (dateString: string | null | undefined): string => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    } catch {
+      return dateString
+    }
   }
 
-  const tabs = ['Images', 'Usage Document', 'Usage Rights']
-  const images = Array(6).fill(null) // Mock 4 images
+  const handleDownloadAllImages = async () => {
+    if (assets.length === 0) return
+
+    for (let i = 0; i < assets.length; i++) {
+      const asset = assets[i]
+      const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
+
+      try {
+        const response = await fetch(imageUrl)
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        const urlParts = imageUrl.split('/')
+        const urlFilename = urlParts[urlParts.length - 1].split('?')[0]
+        const filename = urlFilename || `asset-${asset.id}.jpg`
+
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = filename
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(blobUrl)
+
+        if (i < assets.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 200))
+        }
+      } catch (error) {
+        console.error(`Error downloading image ${asset.id}:`, error)
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
+        <div className='col-flex items-center justify-center py-12'>
+          <span>Loading preview...</span>
+        </div>
+      </main>
+    )
+  }
+
+  if (errorType) {
+    const message =
+      errorType === 'not_found'
+        ? 'This share link does not exist or is no longer valid.'
+        : 'Unable to load preview.'
+    return (
+      <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
+        <div className='col-flex items-center justify-center py-12'>
+          <span className='text-red-500'>{message}</span>
+        </div>
+      </main>
+    )
+  }
+
+  if (!shootData) {
+    return (
+      <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
+        <div className='col-flex items-center justify-center py-12'>
+          <span className='text-red-500'>Unable to load preview.</span>
+        </div>
+      </main>
+    )
+  }
+
+  const clientName = shootData.clients?.name || 'Unknown Client'
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
-      {/* Title Section */}
       <div className='col-flex gap-2 mb-8 xl:mb-25 xl:gap-3'>
         <h1>{shootData.title}</h1>
         <div className='text-sm col-flex gap-1 md:text-base'>
-          <span className=' xl:text-3xl'>Done for {shootData.client}, on {shootData.doneDate}</span>
-          <p className='font-normal xl:text-3xl'>{shootData.description}</p>
-          <span className='xl:text-3xl font-bold'>Delivered to client, expiring {shootData.expiryDate}</span>
+          <span className='xl:text-3xl'>
+            Done for {clientName}, on {formatDate(shootData.shoot_date)}
+          </span>
+          <span className='xl:text-3xl font-bold'>
+            Status: {shootData.status.charAt(0).toUpperCase() + shootData.status.slice(1)}
+          </span>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14 
+      <div
+        className='col-flex gap-3 border-b-[0.5px] border-foreground pb-2 mb-14
       md:flex-row! md:items-center! md:gap-12
       xl:pb-4 xl:mb-22
-      '>
+      '
+      >
         {tabs.map((tab) => (
           <span
             key={tab}
@@ -58,48 +187,93 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
         ))}
       </div>
 
-      {/* Images Grid */}
       {activeTab === 'Images' && (
         <>
-          <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
-            {images.map((_, index) => (
-              <ImageGridItem key={index} />
-            ))}
-          </div>
-
-          {/* Download Images Button */}
-          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
-            Download images
-          </Button>
+          {assets.length === 0 ? (
+            <div className='col-flex items-center justify-center py-12'>
+              <span>No images in this shoot.</span>
+            </div>
+          ) : (
+            <>
+              <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
+                {assets.map((asset) => {
+                  const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
+                  return (
+                    <ImageGridItem
+                      key={asset.id}
+                      src={imageUrl}
+                      alt={`Asset ${asset.id}`}
+                    />
+                  )
+                })}
+              </div>
+              <Button
+                className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
+                onClick={handleDownloadAllImages}
+              >
+                Download images
+              </Button>
+            </>
+          )}
         </>
       )}
 
-      {/* Usage Document Tab Content */}
-      {activeTab === 'Usage Document' && (
-        <>
-          <div className='mb-8'>
-            <PDFViewer src='/documents/test.pdf' title='Usage Document' />
-          </div>
+      {activeTab === 'Usage Document' && (() => {
+        const rightsWithContract = usageRights.find(rights => rights.contract)
+        const contractUrl = rightsWithContract?.contract || null
 
-          {/* Download Agreement Button */}
-          <Button className='bg-foreground text-background w-full p-3.5 md:w-[322px]'>
-            Download agreement
-          </Button>
-        </>
-      )}
+        return (
+          <>
+            {contractUrl ? (
+              <>
+                <div className='mb-8'>
+                  <PDFViewer src={contractUrl} title='Usage Document' />
+                </div>
+                <Button
+                  className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
+                  onClick={() => {
+                    const link = document.createElement('a')
+                    link.href = contractUrl
+                    link.download = 'usage-agreement.pdf'
+                    link.target = '_blank'
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                  }}
+                >
+                  Download agreement
+                </Button>
+              </>
+            ) : (
+              <div className='col-flex items-center justify-center py-12'>
+                <span>No contract available for this shoot.</span>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
-      {/* Usage Rights Tab Content */}
       {activeTab === 'Usage Rights' && (
         <div className='col-flex gap-6'>
-          <UsageRightsContent shootData={shootData} />
-          
-          {/* Download PDF Button */}
-          <Button 
-            className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-            onClick={() => downloadUsageRightsPDF(shootData)}
-          >
-            Download Usage Rights as PDF
-          </Button>
+          {usageRights.length === 0 ? (
+            <div className='col-flex items-center justify-center py-12'>
+              <span>No usage rights for this shoot.</span>
+            </div>
+          ) : (
+            <>
+              {usageRights.map((rights) => (
+                <div key={rights.id} className='col-flex gap-6'>
+                  <UsageRightsContent shootData={shootData} usageRights={rights} />
+                  <Button
+                    className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
+                    onClick={() => downloadUsageRightsPDF(shootData, usageRights[0])}
+                  >
+                    Download Usage Rights as PDF
+                  </Button>
+                </div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </main>
@@ -107,4 +281,3 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
 }
 
 export default PreviewPage
-
