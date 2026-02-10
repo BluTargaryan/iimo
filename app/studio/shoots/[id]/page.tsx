@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
+import { fetchShootById, updateShootStatus, type ShootWithClient } from '@/app/utils/shootOperations'
 import { fetchAssets, deleteAsset, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
 import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
 import { generateShareLink, getShareLinkByShootId, revokeShareLink, type ShareLink } from '@/app/utils/shareLinksOperations'
@@ -12,6 +12,7 @@ import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
 import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConfirmationModal'
 import RevokeLinkConfirmationModal from '@/app/components/atoms/RevokeLinkConfirmationModal'
+import ArchiveShootConfirmationModal from '@/app/components/atoms/ArchiveShootConfirmationModal'
 import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 import Toast from '@/app/components/sections/Toast'
@@ -41,6 +42,8 @@ const ShootPage = ({ params }: ShootPageProps) => {
   const [shareLink, setShareLink] = useState<ShareLink | null>(null)
   const [shareLinkLoading, setShareLinkLoading] = useState(false)
   const [showRevokeModal, setShowRevokeModal] = useState(false)
+  const [showArchiveModal, setShowArchiveModal] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
 
   // Check if any usage rights have a contract
   const hasContract = usageRights.some(rights => rights.contract !== null && rights.contract !== undefined)
@@ -263,6 +266,38 @@ const ShootPage = ({ params }: ShootPageProps) => {
     setShowRevokeModal(false)
   }
 
+  const handleArchiveShoot = () => {
+    setShowArchiveModal(true)
+  }
+
+  const handleConfirmArchive = async () => {
+    setIsArchiving(true)
+    const isRestoring = shootData?.status === 'archived'
+    const newStatus = isRestoring ? 'active' : 'archived'
+    const { data, error: archiveError } = await updateShootStatus(id, newStatus)
+
+    if (archiveError) {
+      setToastMessage(archiveError.message)
+      setShowToast(true)
+      setIsArchiving(false)
+      setShowArchiveModal(false)
+      return
+    }
+
+    if (data) {
+      setShootData(data)
+    }
+
+    setToastMessage(isRestoring ? 'Shoot unarchived successfully' : 'Shoot archived successfully')
+    setShowToast(true)
+    setIsArchiving(false)
+    setShowArchiveModal(false)
+  }
+
+  const handleCloseArchiveModal = () => {
+    setShowArchiveModal(false)
+  }
+
   const handleDownloadAllImages = async () => {
     if (assets.length === 0) return
 
@@ -342,6 +377,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
           </span>
         </div>
         <div className='col-flex gap-2'>
+          <div className='col-flex gap-2 lg:flex-row!'>
           <Button 
             className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
             onClick={handleSharePreview}
@@ -350,6 +386,14 @@ const ShootPage = ({ params }: ShootPageProps) => {
             <span>{shareLink ? 'Copy share link' : 'Share to client'}</span>
             <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
           </Button>
+            <Button 
+              className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
+              onClick={handleArchiveShoot}
+              disabled={isArchiving}
+            >
+              <span>{shootData?.status === 'archived' ? 'Unarchive shoot' : 'Archive shoot'}</span>
+            </Button>
+          </div>
           {shareLink && (
             <>
               <span className='text-sm text-placeholder'>
@@ -565,6 +609,13 @@ const ShootPage = ({ params }: ShootPageProps) => {
         isVisible={showRevokeModal}
         onClose={handleCloseRevokeModal}
         onConfirm={handleConfirmRevoke}
+      />
+      <ArchiveShootConfirmationModal 
+        isVisible={showArchiveModal}
+        onClose={handleCloseArchiveModal}
+        onConfirm={handleConfirmArchive}
+        isLoading={isArchiving}
+        isRestore={shootData?.status === 'archived'}
       />
       <Toast isVisible={showToast} onClose={handleCloseToast} message={toastMessage} />
     </main>
