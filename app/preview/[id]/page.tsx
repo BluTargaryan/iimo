@@ -266,7 +266,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
                   <UsageRightsContent shootData={shootData} usageRights={rights} />
                   <Button
                     className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-                    onClick={() => downloadUsageRightsPDF(shootData, usageRights[0])}
+                    onClick={() => downloadUsageRightsPDF(shootData, rights)}
                   >
                     Download Usage Rights as PDF
                   </Button>

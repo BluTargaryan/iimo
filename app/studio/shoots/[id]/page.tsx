@@ -355,7 +355,8 @@ const ShootPage = ({ params }: ShootPageProps) => {
     return (
       <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
         <div className='col-flex items-center justify-center py-12'>
-          <span className='text-red-500'>Error: {error || 'Shoot not found'}</span>
+          {/* <span className='text-red-500'>Error: {error || 'Shoot not found'}</span> */}
+          <span className='text-red-500'>Error: {'Shoot not found'}</span>
         </div>
       </main>
     )
@@ -585,7 +586,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
                   {/* Download PDF Button */}
               <Button 
                 className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-                onClick={() => downloadUsageRightsPDF(shootData, usageRights[0])}
+                onClick={() => downloadUsageRightsPDF(shootData, rights)}
               >
                 Download Usage Rights as PDF
               </Button>

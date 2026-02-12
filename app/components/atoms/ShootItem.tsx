@@ -24,27 +24,26 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
     router.push(`/studio/shoots/${shoot.id}`)
   }
 
-  // Use provided thumbnails or placeholder
-  const displayThumbnails = thumbnailUrls && thumbnailUrls.length > 0 
-    ? thumbnailUrls.slice(0, 4) 
-    : Array(4).fill('https://images.unsplash.com/photo-1761839256547-0a1cd11b6dfb')
+  const displayThumbnails = thumbnailUrls && thumbnailUrls.length > 0 ? thumbnailUrls.slice(0, 4) : []
 
   return (
     <div className='col-flex gap-2 md:gap-4'>
         <h2>{shoot.title || 'Untitled Shoot'}</h2>
 
-        <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
-          {displayThumbnails.map((src, index) => (
-            <Image 
-              key={index}
-              src={src} 
-              alt={`shoot-item-${index}`} 
-              width={300} 
-              height={300} 
-              className='w-full h-full object-cover border-2 rounded-lg border-foreground' 
-            />
-          ))}
-        </div>
+        {displayThumbnails.length > 0 ? (
+          <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
+            {displayThumbnails.map((src, index) => (
+              <Image 
+                key={index}
+                src={src} 
+                alt={`shoot-item-${index}`} 
+                width={300} 
+                height={300} 
+                className='w-full h-full object-cover border-2 rounded-lg border-foreground' 
+              />
+            ))}
+          </div>
+        ) : null}
 
         <div className='row-flex gap-4.5'>
           <Button className='bg-foreground text-background w-full p-3!' onClick={handleView}>
