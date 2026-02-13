@@ -8,6 +8,7 @@ import TextInput from '@/app/components/atoms/TextInput'
 import DateInput from '@/app/components/atoms/DateInput'
 import Textarea from '@/app/components/atoms/Textarea'
 import FileInput from '@/app/components/atoms/FileInput'
+import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
 
 const EditRightsPage = () => {
@@ -24,6 +25,8 @@ const EditRightsPage = () => {
     restrictions: '',
     contract: null as File | null
   })
+  const [existingContractUrl, setExistingContractUrl] = useState<string | null>(null)
+  const [newContractPreviewUrl, setNewContractPreviewUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -85,6 +88,7 @@ const EditRightsPage = () => {
         restrictions: rights.restrictions || '',
         contract: null // Don't pre-populate file input
       })
+      setExistingContractUrl(rights.contract || null)
       setFetching(false)
     }
 
@@ -116,10 +120,55 @@ const EditRightsPage = () => {
         setError('Only PDF files are allowed for contracts')
         return
       }
+      
+      // Clean up previous preview URL if exists
+      if (newContractPreviewUrl) {
+        URL.revokeObjectURL(newContractPreviewUrl)
+      }
+      
+      // Create preview URL for the new file
+      const previewUrl = URL.createObjectURL(file)
+      setNewContractPreviewUrl(previewUrl)
+      
       setFormData(prev => ({
         ...prev,
         contract: file
       }))
+    } else {
+      // Clean up preview URL if file is removed
+      if (newContractPreviewUrl) {
+        URL.revokeObjectURL(newContractPreviewUrl)
+        setNewContractPreviewUrl(null)
+      }
+    }
+  }
+
+  // Cleanup preview URL on unmount
+  useEffect(() => {
+    return () => {
+      if (newContractPreviewUrl) {
+        URL.revokeObjectURL(newContractPreviewUrl)
+      }
+    }
+  }, [newContractPreviewUrl])
+
+  const handleDiscardNewContract = () => {
+    // Clean up preview URL
+    if (newContractPreviewUrl) {
+      URL.revokeObjectURL(newContractPreviewUrl)
+      setNewContractPreviewUrl(null)
+    }
+    
+    // Clear the contract from form data
+    setFormData(prev => ({
+      ...prev,
+      contract: null
+    }))
+    
+    // Reset the file input
+    const fileInput = document.getElementById('contract') as HTMLInputElement
+    if (fileInput) {
+      fileInput.value = ''
     }
   }
 
@@ -280,14 +329,49 @@ const EditRightsPage = () => {
             rows={4}
           />
 
-          <FileInput
-            id="contract"
-            name="contract"
-            label="Contract (optional)"
-            placeholder="Select a file (pdf)"
-            accept=".pdf"
-            onChange={handleFileChange}
-          />
+          <div className="col-flex gap-3.5">
+            {existingContractUrl && !formData.contract && (
+              <div className="w-full">
+                <p className="text-sm mb-2 text-placeholder">Current contract:</p>
+                <div className="mb-8">
+                  <PDFViewer src={existingContractUrl} title="Contract PDF Viewer" />
+                </div>
+              </div>
+            )}
+            {formData.contract && (
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm text-foreground font-semibold">
+                    {existingContractUrl ? 'New contract (will replace existing):' : 'New contract:'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleDiscardNewContract}
+                    className="text-sm text-red-600 hover:opacity-70 underline"
+                  >
+                    Discard
+                  </button>
+                </div>
+                {newContractPreviewUrl && (
+                  <div className="mb-8">
+                    <PDFViewer src={newContractPreviewUrl} title="New Contract PDF Preview" />
+                  </div>
+                )}
+                <p className="text-sm text-placeholder mb-2">
+                  Selected: {formData.contract.name}
+                </p>
+              </div>
+            )}
+            <FileInput
+              id="contract"
+              name="contract"
+              label="Contract (optional)"
+              placeholder="Select a file (pdf)"
+              accept=".pdf"
+              value={formData.contract?.name || ''}
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
 
         <div className="col-flex gap-4">

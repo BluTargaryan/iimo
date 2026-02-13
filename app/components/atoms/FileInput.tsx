@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import folderIcon from '@/app/assets/images/folder.svg'
 
@@ -10,11 +10,16 @@ interface FileInputProps {
   label: string
   placeholder?: string
   accept?: string
+  value?: string
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const FileInput = ({ id, name, label, placeholder = 'Select a file (pdf)', accept = '.pdf', onChange }: FileInputProps) => {
-  const [fileName, setFileName] = useState<string>('')
+const FileInput = ({ id, name, label, placeholder = 'Select a file (pdf)', accept = '.pdf', value, onChange }: FileInputProps) => {
+  const [fileName, setFileName] = useState<string>(value || '')
+
+  useEffect(() => {
+    setFileName(value || '')
+  }, [value])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
