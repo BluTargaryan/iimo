@@ -163,11 +163,21 @@ export async function createUsageRights(
 
 /**
  * Fetch usage rights for a shoot
+ * For authenticated users, verifies ownership. For unauthenticated (preview), allows access.
  */
 export async function fetchUsageRights(
   shootId: string
 ): Promise<{ data: UsageRights[] | null; error: Error | null }> {
   try {
+    // Check if user is authenticated - if so, verify ownership
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { valid, error: ownershipError } = await verifyShootOwnership(shootId)
+      if (!valid) {
+        return { data: null, error: ownershipError || new Error('Access denied') }
+      }
+    }
+
     const { data, error } = await supabase
       .from('usage_rights')
       .select('*')
@@ -212,6 +222,12 @@ export async function updateUsageRights(
 
     if (fetchError || !existingRights) {
       return { data: null, error: new Error('Usage rights not found') }
+    }
+
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(existingRights.shoot_id)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
     }
 
     let contractUrl: string | null = existingRights.contract
@@ -290,21 +306,27 @@ export async function deleteUsageRights(
   rightsId: string
 ): Promise<{ error: Error | null }> {
   try {
-    // Fetch existing rights to get contract URL
+    // Fetch existing rights to get contract URL and shoot_id
     const { data: existingRights, error: fetchError } = await supabase
       .from('usage_rights')
       .select('contract, shoot_id')
       .eq('id', rightsId)
       .single()
 
-    if (fetchError) {
+    if (fetchError || !existingRights) {
       return { error: new Error('Usage rights not found') }
     }
 
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(existingRights.shoot_id)
+    if (!valid) {
+      return { error: ownershipError || new Error('Access denied') }
+    }
+
     // Delete contract from Storage if exists
-    if (existingRights?.contract) {
+    if (existingRights.contract) {
       const urlParts = existingRights.contract.split('/contracts/')
-      if (urlParts.length > 1 && existingRights.shoot_id) {
+      if (urlParts.length > 1) {
         const filePath = `shoots/${existingRights.shoot_id}/contracts/${urlParts[1]}`
         await supabase.storage.from('contracts').remove([filePath])
       }

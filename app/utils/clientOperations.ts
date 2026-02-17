@@ -19,6 +19,39 @@ export interface Note {
 }
 
 /**
+ * Helper function to verify that the current user owns the client
+ */
+async function verifyClientOwnership(clientId: string): Promise<{ valid: boolean; error: Error | null }> {
+  try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { valid: false, error: new Error('User not authenticated') }
+    }
+
+    // Check if client exists and belongs to user
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id, user_id')
+      .eq('id', clientId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (clientError || !client) {
+      return { valid: false, error: new Error('Client not found or access denied') }
+    }
+
+    return { valid: true, error: null }
+  } catch (error) {
+    return {
+      valid: false,
+      error: error instanceof Error ? error : new Error('Failed to verify client ownership'),
+    }
+  }
+}
+
+/**
  * Fetch clients for a user, optionally filtered by status
  */
 export async function fetchClients(
@@ -60,10 +93,18 @@ export async function fetchClientById(
   clientId: string
 ): Promise<{ data: Client | null; error: Error | null }> {
   try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
     const { data, error } = await supabase
       .from('clients')
       .select('*')
       .eq('id', clientId)
+      .eq('user_id', user.id)
       .single()
 
     if (error) {
@@ -123,6 +164,12 @@ export async function updateClient(
   data: { name?: string; email?: string }
 ): Promise<{ data: Client | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const updateData: { name?: string; email?: string | null; updated_at?: string } = {
       updated_at: new Date().toISOString(),
     }
@@ -163,6 +210,12 @@ export async function archiveClient(
   clientId: string
 ): Promise<{ data: Client | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data: archivedClient, error } = await supabase
       .from('clients')
       .update({
@@ -195,6 +248,12 @@ export async function restoreClient(
   clientId: string
 ): Promise<{ data: Client | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data: restoredClient, error } = await supabase
       .from('clients')
       .update({
@@ -227,6 +286,12 @@ export async function fetchNotes(
   clientId: string
 ): Promise<{ data: Note[] | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data, error } = await supabase
       .from('notes')
       .select('*')
@@ -256,6 +321,12 @@ export async function createNote(
   content: string
 ): Promise<{ data: Note | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data: newNote, error } = await supabase
       .from('notes')
       .insert({
@@ -288,6 +359,30 @@ export async function updateNote(
   content: string
 ): Promise<{ data: Note | null; error: Error | null }> {
   try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { data: null, error: new Error('User not authenticated') }
+    }
+
+    // Fetch note to get client_id
+    const { data: note, error: fetchError } = await supabase
+      .from('notes')
+      .select('client_id')
+      .eq('id', noteId)
+      .single()
+
+    if (fetchError || !note) {
+      return { data: null, error: new Error('Note not found') }
+    }
+
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(note.client_id)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data: updatedNote, error } = await supabase
       .from('notes')
       .update({
@@ -320,6 +415,30 @@ export async function deleteNote(
   noteId: string
 ): Promise<{ error: Error | null }> {
   try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { error: new Error('User not authenticated') }
+    }
+
+    // Fetch note to get client_id
+    const { data: note, error: fetchError } = await supabase
+      .from('notes')
+      .select('client_id')
+      .eq('id', noteId)
+      .single()
+
+    if (fetchError || !note) {
+      return { error: new Error('Note not found') }
+    }
+
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(note.client_id)
+    if (!valid) {
+      return { error: ownershipError || new Error('Access denied') }
+    }
+
     const { error } = await supabase.from('notes').delete().eq('id', noteId)
 
     if (error) {

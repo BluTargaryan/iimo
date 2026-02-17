@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import TextInput from "../../components/atoms/TextInput";
 import PasswordInput from "../../components/atoms/PasswordInput";
@@ -10,6 +10,7 @@ import { supabase } from '@/app/utils/supabase'
 
 export default function Login() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -54,8 +55,15 @@ export default function Login() {
         return
       }
 
-      // Session is created automatically, redirect to dashboard
-      router.push('/studio/shoots')
+      // Session is created automatically, redirect to original destination or dashboard
+      const redirectedFrom = searchParams.get('redirectedFrom')
+      
+      // Validate that redirectedFrom is a valid internal path (starts with /studio)
+      if (redirectedFrom && redirectedFrom.startsWith('/studio')) {
+        router.push(redirectedFrom)
+      } else {
+        router.push('/studio/shoots')
+      }
     } catch (err) {
       setError('An unexpected error occurred')
       setLoading(false)
@@ -74,8 +82,8 @@ export default function Login() {
           id="email" 
           name="email" 
           type="email" 
-          label="Email / title" 
-          placeholder="Enter your email or title"
+          label="Email" 
+          placeholder="Enter your email"
           value={formData.email}
           onChange={handleInputChange}
         />

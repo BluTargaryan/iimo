@@ -4,12 +4,17 @@ import React, { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import dropdownArrow from '@/app/assets/images/dropdownArrow.svg'
 
+export interface SelectOption {
+  value: string
+  label: string
+}
+
 interface SelectProps {
   id: string
   name: string
   label: string
   placeholder?: string
-  options?: string[]
+  options?: string[] | SelectOption[]
   value?: string
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void
 }
@@ -39,8 +44,22 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
     }
   }, [isOpen])
 
-  const handleOptionClick = (option: string) => {
-    setSelectedValue(option)
+  // Normalize options to SelectOption format
+  const normalizedOptions: SelectOption[] = options.map(opt => {
+    if (typeof opt === 'string') {
+      return { value: opt, label: opt }
+    }
+    return opt
+  })
+
+  // Get display label for selected value
+  const getDisplayLabel = (val: string): string => {
+    const option = normalizedOptions.find(opt => opt.value === val)
+    return option ? option.label : val
+  }
+
+  const handleOptionClick = (optionValue: string) => {
+    setSelectedValue(optionValue)
     setIsOpen(false)
     
     // Create a synthetic event to match the onChange signature
@@ -48,14 +67,14 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
       const syntheticEvent = {
         target: {
           name,
-          value: option
+          value: optionValue
         }
       } as React.ChangeEvent<HTMLSelectElement>
       onChange(syntheticEvent)
     }
   }
 
-  const displayValue = selectedValue || placeholder
+  const displayValue = selectedValue ? getDisplayLabel(selectedValue) : placeholder
 
   return (
     <div className="col-flex gap-3.5 items-center">
@@ -79,18 +98,18 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
         {/* Dropdown Options */}
         {isOpen && (
           <div className="absolute top-full left-0 right-0 z-20 bg-background border border-foreground border-t-0 rounded-b-3xl overflow-hidden shadow-lg">
-            {options.map((option, index) => (
-              <React.Fragment key={option}>
+            {normalizedOptions.map((option, index) => (
+              <React.Fragment key={option.value}>
                 {index > 0 && (
                   <div className="h-[0.5px] bg-foreground/20" />
                 )}
                 <div
-                  onClick={() => handleOptionClick(option)}
+                  onClick={() => handleOptionClick(option.value)}
                   className={`p-3.5 text-center cursor-pointer hover:bg-foreground/5 transition-colors ${
-                    selectedValue === option ? 'bg-foreground/10' : ''
+                    selectedValue === option.value ? 'bg-foreground/10' : ''
                   }`}
                 >
-                  {option}
+                  {option.label}
                 </div>
               </React.Fragment>
             ))}

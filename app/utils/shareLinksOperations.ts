@@ -153,6 +153,23 @@ export async function updateShareLinkExpiry(
       return { data: null, error: new Error('User not authenticated') }
     }
 
+    // Fetch share link to get shoot_id
+    const { data: shareLink, error: fetchError } = await supabase
+      .from('share_links')
+      .select('shoot_id')
+      .eq('id', linkId)
+      .single()
+
+    if (fetchError || !shareLink) {
+      return { data: null, error: new Error('Share link not found') }
+    }
+
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(shareLink.shoot_id)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data, error } = await supabase
       .from('share_links')
       .update({ expires_at: expiresAt.toISOString() })
@@ -183,6 +200,23 @@ export async function revokeShareLink(linkId: string): Promise<{ error: Error | 
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return { error: new Error('User not authenticated') }
+    }
+
+    // Fetch share link to get shoot_id
+    const { data: shareLink, error: fetchError } = await supabase
+      .from('share_links')
+      .select('shoot_id')
+      .eq('id', linkId)
+      .single()
+
+    if (fetchError || !shareLink) {
+      return { error: new Error('Share link not found') }
+    }
+
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(shareLink.shoot_id)
+    if (!valid) {
+      return { error: ownershipError || new Error('Access denied') }
     }
 
     const { error } = await supabase

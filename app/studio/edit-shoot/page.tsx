@@ -18,7 +18,7 @@ const EditShootPage = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    client: '',
+    client: '', // Now stores client ID
     shootDate: ''
   })
   const [clients, setClients] = useState<Client[]>([])
@@ -57,12 +57,11 @@ const EditShootPage = () => {
       }
 
       const shoot = shootResult.data
-      const clientName = shoot.clients?.name || ''
       const matchingClient = clientsData.find(c => c.id === shoot.client_id)
 
       setFormData({
         title: shoot.title || '',
-        client: matchingClient?.name || clientName || '',
+        client: shoot.client_id || '',
         shootDate: shoot.shoot_date || ''
       })
       setFetching(false)
@@ -71,7 +70,14 @@ const EditShootPage = () => {
     loadData()
   }, [user?.id, shootId])
 
-  const clientOptions = [...new Set(clients.map(client => client.name))]
+  // Create unique options by ID (in case of duplicate names)
+  const uniqueClients = Array.from(
+    new Map(clients.map(client => [client.id, client])).values()
+  )
+  const clientOptions = uniqueClients.map(client => ({
+    value: client.id,
+    label: client.name
+  }))
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -106,7 +112,8 @@ const EditShootPage = () => {
       return
     }
 
-    const selectedClient = clients.find(c => c.name === formData.client)
+    // Validate client ID
+    const selectedClient = clients.find(c => c.id === formData.client)
     if (!selectedClient) {
       setError('Invalid client selected')
       return
@@ -117,7 +124,7 @@ const EditShootPage = () => {
     try {
       const { data: updatedShoot, error: updateError } = await updateShoot(shootId, {
         title: formData.title.trim(),
-        client_id: selectedClient.id,
+        client_id: formData.client,
         shoot_date: formData.shootDate || undefined
       })
 

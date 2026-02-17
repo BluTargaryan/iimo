@@ -20,6 +20,72 @@ export interface ShootWithClient extends Shoot {
 }
 
 /**
+ * Helper function to verify that the current user owns the shoot
+ */
+async function verifyShootOwnership(shootId: string): Promise<{ valid: boolean; error: Error | null }> {
+  try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { valid: false, error: new Error('User not authenticated') }
+    }
+
+    // Check if shoot exists and belongs to user
+    const { data: shoot, error: shootError } = await supabase
+      .from('shoots')
+      .select('id, user_id')
+      .eq('id', shootId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (shootError || !shoot) {
+      return { valid: false, error: new Error('Shoot not found or access denied') }
+    }
+
+    return { valid: true, error: null }
+  } catch (error) {
+    return {
+      valid: false,
+      error: error instanceof Error ? error : new Error('Failed to verify shoot ownership'),
+    }
+  }
+}
+
+/**
+ * Helper function to verify that the current user owns the client
+ */
+async function verifyClientOwnership(clientId: string): Promise<{ valid: boolean; error: Error | null }> {
+  try {
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return { valid: false, error: new Error('User not authenticated') }
+    }
+
+    // Check if client exists and belongs to user
+    const { data: client, error: clientError } = await supabase
+      .from('clients')
+      .select('id, user_id')
+      .eq('id', clientId)
+      .eq('user_id', user.id)
+      .single()
+
+    if (clientError || !client) {
+      return { valid: false, error: new Error('Client not found or access denied') }
+    }
+
+    return { valid: true, error: null }
+  } catch (error) {
+    return {
+      valid: false,
+      error: error instanceof Error ? error : new Error('Failed to verify client ownership'),
+    }
+  }
+}
+
+/**
  * Fetch shoots for a user, optionally filtered by status
  */
 export async function fetchShoots(
@@ -64,6 +130,12 @@ export async function fetchShootsByClient(
   status?: 'Active' | 'Expiring' | 'Expired' | 'Archived'
 ): Promise<{ data: Shoot[] | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(clientId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     let query = supabase
       .from('shoots')
       .select('*')
@@ -95,12 +167,16 @@ export async function fetchShootsByClient(
 
 /**
  * Fetch a single shoot by ID with client relationship
+ * For authenticated users, verifies ownership. For unauthenticated (preview), allows access.
  */
 export async function fetchShootById(
   shootId: string
 ): Promise<{ data: ShootWithClient | null; error: Error | null }> {
   try {
-    const { data, error } = await supabase
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    let query = supabase
       .from('shoots')
       .select(`
         *,
@@ -111,7 +187,13 @@ export async function fetchShootById(
         )
       `)
       .eq('id', shootId)
-      .single()
+
+    // If authenticated, filter by user_id for security
+    if (user) {
+      query = query.eq('user_id', user.id)
+    }
+
+    const { data, error } = await query.single()
 
     if (error) {
       console.error('Error fetching shoot:', error)
@@ -141,6 +223,12 @@ export async function createShoot(
   }
 ): Promise<{ data: Shoot | null; error: Error | null }> {
   try {
+    // Verify user owns the client
+    const { valid, error: ownershipError } = await verifyClientOwnership(data.client_id)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied: Client does not belong to user') }
+    }
+
     const { data: newShoot, error } = await supabase
       .from('shoots')
       .insert({
@@ -181,6 +269,20 @@ export async function updateShoot(
   }
 ): Promise<{ data: Shoot | null; error: Error | null }> {
   try {
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(shootId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
+    // If updating client_id, verify user owns the new client
+    if (data.client_id !== undefined) {
+      const { valid: clientValid, error: clientOwnershipError } = await verifyClientOwnership(data.client_id)
+      if (!clientValid) {
+        return { data: null, error: clientOwnershipError || new Error('Access denied: Client does not belong to user') }
+      }
+    }
+
     const updateData: any = {
       updated_at: new Date().toISOString(),
     }
@@ -228,6 +330,12 @@ export async function updateShootStatus(
   status: 'active' | 'expiring' | 'expired' | 'archived'
 ): Promise<{ data: Shoot | null; error: Error | null }> {
   try {
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(shootId)
+    if (!valid) {
+      return { data: null, error: ownershipError || new Error('Access denied') }
+    }
+
     const { data: updatedShoot, error } = await supabase
       .from('shoots')
       .update({
@@ -260,6 +368,12 @@ export async function deleteShoot(
   shootId: string
 ): Promise<{ error: Error | null }> {
   try {
+    // Verify user owns the shoot
+    const { valid, error: ownershipError } = await verifyShootOwnership(shootId)
+    if (!valid) {
+      return { error: ownershipError || new Error('Access denied') }
+    }
+
     const { error } = await supabase
       .from('shoots')
       .delete()

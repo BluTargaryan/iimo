@@ -35,6 +35,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
   const [client, setClient] = useState<Client | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
   const [shoots, setShoots] = useState<Shoot[]>([])
+  const [totalShootCount, setTotalShootCount] = useState<number>(0)
   const [shootThumbnails, setShootThumbnails] = useState<Record<string, string[]>>({})
   const [shootsLoading, setShootsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -86,6 +87,12 @@ const ClientPage = ({ params }: ClientPageProps) => {
 
     const loadShoots = async () => {
       setShootsLoading(true)
+      
+      // Fetch total count (all shoots regardless of status)
+      const { data: allShoots } = await fetchShootsByClient(client.id)
+      setTotalShootCount(allShoots?.length || 0)
+      
+      // Fetch filtered shoots for current tab
       const { data, error: fetchError } = await fetchShootsByClient(
         client.id,
         activeShootTab as 'Active' | 'Expiring' | 'Expired' | 'Archived'
@@ -293,7 +300,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
           <div className='col-flex gap-2 flex-1'>
             <h1 className='text-2xl xl:text-3xl font-bold'>{client.name}</h1>
             <div className='col-flex gap-1 text-sm md:text-base'>
-              <span>Added on {formatDate(client.created_at)}, has 0 shoots</span>
+              <span>Added on {formatDate(client.created_at)}, has {totalShootCount} {totalShootCount === 1 ? 'shoot' : 'shoots'}</span>
               {client.email && (
                 <span>
                   Contact : <a href={`mailto:${client.email}`} className='underline'>{client.email}</a>

@@ -18,7 +18,7 @@ const AddShootPage = () => {
   const clientId = searchParams.get('clientId')
   const [formData, setFormData] = useState({
     title: '',
-    client: '',
+    client: '', // Now stores client ID
     shootDate: '',
     contract: null as File | null
   })
@@ -43,7 +43,7 @@ const AddShootPage = () => {
           if (preSelectedClient) {
             setFormData(prev => ({
               ...prev,
-              client: preSelectedClient.name
+              client: preSelectedClient.id
             }))
           }
         }
@@ -53,7 +53,10 @@ const AddShootPage = () => {
     loadClients()
   }, [user?.id, clientId])
 
-  const clientOptions = clients.map(client => client.name)
+  const clientOptions = clients.map(client => ({
+    value: client.id,
+    label: client.name
+  }))
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -94,8 +97,8 @@ const AddShootPage = () => {
       return
     }
 
-    // Find client ID from selected client name
-    const selectedClient = clients.find(c => c.name === formData.client)
+    // Validate client ID
+    const selectedClient = clients.find(c => c.id === formData.client)
     if (!selectedClient) {
       setError('Invalid client selected')
       return
@@ -112,7 +115,7 @@ const AddShootPage = () => {
 
       const { data: newShoot, error: createError } = await createShoot({
         user_id: user.id,
-        client_id: selectedClient.id,
+        client_id: formData.client,
         title: formData.title.trim(),
         shoot_date: formData.shootDate || undefined,
         status: 'active', // Default status for new shoots
