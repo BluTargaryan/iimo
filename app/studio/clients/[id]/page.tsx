@@ -15,6 +15,7 @@ import {
   type Note,
 } from '@/app/utils/clientOperations'
 import { fetchShootsByClient, type Shoot } from '@/app/utils/shootOperations'
+import { fetchAssets, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
 import Button from '@/app/components/atoms/Button'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
@@ -34,6 +35,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
   const [client, setClient] = useState<Client | null>(null)
   const [notes, setNotes] = useState<Note[]>([])
   const [shoots, setShoots] = useState<Shoot[]>([])
+  const [shootThumbnails, setShootThumbnails] = useState<Record<string, string[]>>({})
   const [shootsLoading, setShootsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -92,9 +94,34 @@ const ClientPage = ({ params }: ClientPageProps) => {
       if (fetchError) {
         console.error('Error fetching shoots:', fetchError)
         setShoots([])
-      } else {
-        setShoots(data || [])
+        setShootThumbnails({})
+        setShootsLoading(false)
+        return
       }
+
+      const shootsData = data || []
+      setShoots(shootsData)
+
+      // Fetch watermarked images for all shoots in parallel
+      const thumbnailPromises = shootsData.map(async (shoot) => {
+        const { data: assets } = await fetchAssets(shoot.id)
+        if (assets && assets.length > 0) {
+          // Get first 4 watermarked images, falling back to regular image if watermarked not available
+          const thumbnails = assets.slice(0, 4).map(asset => {
+            const watermarkedUrl = getWatermarkedImageUrl(asset.watermarked_image)
+            return watermarkedUrl || getAssetUrl(asset.image)
+          })
+          return { shootId: shoot.id, thumbnails }
+        }
+        return { shootId: shoot.id, thumbnails: [] }
+      })
+
+      const thumbnailResults = await Promise.all(thumbnailPromises)
+      const thumbnailMap: Record<string, string[]> = {}
+      thumbnailResults.forEach(({ shootId, thumbnails }) => {
+        thumbnailMap[shootId] = thumbnails
+      })
+      setShootThumbnails(thumbnailMap)
       setShootsLoading(false)
     }
 
@@ -420,7 +447,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
           <h2 className='text-xl xl:text-2xl font-bold'>Shoots</h2>
           <Button 
             className='bg-foreground text-background px-4 py-2 xl:w-[238px]'
-            onClick={() => router.push('/studio/add-shoot')}
+            onClick={() => router.push(`/studio/add-shoot?clientId=${client.id}`)}
           >
             <span>Add shoot</span>
           </Button>
@@ -454,7 +481,12 @@ const ClientPage = ({ params }: ClientPageProps) => {
         ) : (
           <div className='grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3'>
             {shoots.map((shoot) => (
-              <ShootItem key={shoot.id} shoot={shoot} onShare={handleShare} />
+              <ShootItem 
+                key={shoot.id} 
+                shoot={shoot} 
+                onShare={handleShare}
+                thumbnailUrls={shootThumbnails[shoot.id]}
+              />
             ))}
           </div>
         )}

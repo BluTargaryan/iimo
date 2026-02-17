@@ -24,6 +24,10 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
     router.push(`/studio/shoots/${shoot.id}`)
   }
 
+  const handleEdit = () => {
+    router.push(`/studio/edit-shoot?shootId=${shoot.id}`)
+  }
+
   const displayThumbnails = thumbnailUrls && thumbnailUrls.length > 0 ? thumbnailUrls.slice(0, 4) : []
 
   return (
@@ -45,9 +49,12 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
           </div>
         ) : null}
 
-        <div className='row-flex gap-4.5'>
+        <div className='row-flex gap-2'>
           <Button className='bg-foreground text-background w-full p-3!' onClick={handleView}>
             View
+          </Button>
+          <Button className='border border-foreground text-foreground w-full p-3!' onClick={handleEdit}>
+            Edit
           </Button>
           <Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
             <span>Share</span>

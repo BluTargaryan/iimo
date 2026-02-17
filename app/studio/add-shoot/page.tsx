@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { fetchClients, type Client } from '@/app/utils/clientOperations'
 import { createShoot } from '@/app/utils/shootOperations'
@@ -14,6 +14,8 @@ import Button from '@/app/components/atoms/Button'
 const AddShootPage = () => {
   const { user } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const clientId = searchParams.get('clientId')
   const [formData, setFormData] = useState({
     title: '',
     client: '',
@@ -34,11 +36,22 @@ const AddShootPage = () => {
         setError(fetchError.message)
       } else {
         setClients(data || [])
+        
+        // Pre-select client if clientId is provided in URL
+        if (clientId && data) {
+          const preSelectedClient = data.find(c => c.id === clientId)
+          if (preSelectedClient) {
+            setFormData(prev => ({
+              ...prev,
+              client: preSelectedClient.name
+            }))
+          }
+        }
       }
     }
 
     loadClients()
-  }, [user?.id])
+  }, [user?.id, clientId])
 
   const clientOptions = clients.map(client => client.name)
 

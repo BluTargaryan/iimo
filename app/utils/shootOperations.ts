@@ -175,6 +175,7 @@ export async function updateShoot(
   shootId: string,
   data: {
     title?: string
+    client_id?: string
     shoot_date?: string
     status?: 'active' | 'expiring' | 'expired' | 'archived'
   }
@@ -186,6 +187,9 @@ export async function updateShoot(
 
     if (data.title !== undefined) {
       updateData.title = data.title
+    }
+    if (data.client_id !== undefined) {
+      updateData.client_id = data.client_id
     }
     if (data.shoot_date !== undefined) {
       updateData.shoot_date = data.shoot_date || null
