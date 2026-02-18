@@ -1,4 +1,5 @@
 'use client'
+import React from 'react'
 import Image from 'next/image'
 import Button from './Button'
 import share from '@/app/assets/images/share.svg'
@@ -38,11 +39,13 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
           <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
             {displayThumbnails.map((src, index) => (
               <Image 
-                key={index}
+                key={src}
                 src={src} 
-                alt={`shoot-item-${index}`} 
+                alt={`${shoot.title || 'Shoot'} thumbnail ${index + 1}`} 
                 width={300} 
-                height={300} 
+                height={300}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                priority={index < 2}
                 className='w-full h-full object-cover border-2 rounded-lg border-foreground' 
               />
             ))}
@@ -65,4 +68,4 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
   )
 }
 
-export default ShootItem
+export default React.memo(ShootItem)

@@ -7,15 +7,19 @@ import { fetchShootById, updateShootStatus, type ShootWithClient } from '@/app/u
 import { fetchAssets, deleteAsset, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
 import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
 import { generateShareLink, getShareLinkByShootId, revokeShareLink, type ShareLink } from '@/app/utils/shareLinksOperations'
+import dynamic from 'next/dynamic'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
-import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
 import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConfirmationModal'
 import RevokeLinkConfirmationModal from '@/app/components/atoms/RevokeLinkConfirmationModal'
 import ArchiveShootConfirmationModal from '@/app/components/atoms/ArchiveShootConfirmationModal'
-import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
+
+// Lazy load heavy components
+const PDFViewer = dynamic(() => import('@/app/components/atoms/PDFViewer'), { ssr: false })
+const UsageRightsContent = dynamic(() => import('@/app/components/atoms/UsageRightsContent'), { ssr: false })
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 import Toast from '@/app/components/sections/Toast'
+import { formatDate } from '@/app/utils/format'
 import share from '@/app/assets/images/share.svg'
 
 interface ShootPageProps {
@@ -104,13 +108,11 @@ const ShootPage = ({ params }: ShootPageProps) => {
     loadShareLink()
   }, [id])
 
-  // Fetch assets on mount and when Images tab is active
+  // Fetch assets once on mount (not on tab change)
   useEffect(() => {
     if (id) {
       const loadAssets = async () => {
-        if (activeTab === 'Images') {
-          setAssetsLoading(true)
-        }
+        setAssetsLoading(true)
         const { data, error: fetchError } = await fetchAssets(id)
         
         if (fetchError) {
@@ -119,22 +121,18 @@ const ShootPage = ({ params }: ShootPageProps) => {
         } else {
           setAssets(data || [])
         }
-        if (activeTab === 'Images') {
-          setAssetsLoading(false)
-        }
+        setAssetsLoading(false)
       }
 
       loadAssets()
     }
-  }, [activeTab, id])
+  }, [id])
 
-  // Fetch usage rights on mount and when Usage Rights tab is active
+  // Fetch usage rights once on mount (not on tab change)
   useEffect(() => {
     if (id) {
       const loadUsageRights = async () => {
-        if (activeTab === 'Usage Rights') {
-          setRightsLoading(true)
-        }
+        setRightsLoading(true)
         const { data, error: fetchError } = await fetchUsageRights(id)
         
         if (fetchError) {
@@ -143,24 +141,14 @@ const ShootPage = ({ params }: ShootPageProps) => {
         } else {
           setUsageRights(data || [])
         }
-        if (activeTab === 'Usage Rights') {
-          setRightsLoading(false)
-        }
+        setRightsLoading(false)
       }
 
       loadUsageRights()
     }
-  }, [activeTab, id])
+  }, [id])
 
-  const formatDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return 'N/A'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    } catch {
-      return dateString
-    }
-  }
+  // formatDate moved to utils/format.ts
 
   const handleDeleteImage = (assetId: string) => {
     setAssetToDelete(assetId)

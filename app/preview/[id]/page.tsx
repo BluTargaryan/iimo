@@ -1,15 +1,19 @@
 'use client'
 
 import React, { useState, useEffect, use } from 'react'
+import dynamic from 'next/dynamic'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
-import PDFViewer from '@/app/components/atoms/PDFViewer'
 import Button from '@/app/components/atoms/Button'
-import UsageRightsContent from '@/app/components/atoms/UsageRightsContent'
+
+// Lazy load heavy components
+const PDFViewer = dynamic(() => import('@/app/components/atoms/PDFViewer'), { ssr: false })
+const UsageRightsContent = dynamic(() => import('@/app/components/atoms/UsageRightsContent'), { ssr: false })
 import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
 import { getShootIdByToken } from '@/app/utils/shareLinksOperations'
 import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
 import { fetchAssets, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
 import { fetchUsageRights, type UsageRights } from '@/app/utils/usageRightsOperations'
+import { formatDate } from '@/app/utils/format'
 
 interface PreviewPageProps {
   params: Promise<{
@@ -78,23 +82,14 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
     load()
   }, [shareToken])
 
-  const formatDate = (dateString: string | null | undefined): string => {
-    if (!dateString) return 'N/A'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    } catch {
-      return dateString
-    }
-  }
+  // formatDate moved to utils/format.ts
 
   const handleDownloadAllImages = async () => {
     if (assets.length === 0) return
 
-    for (let i = 0; i < assets.length; i++) {
-      const asset = assets[i]
+    const CONCURRENCY_LIMIT = 3
+    const downloadImage = async (asset: Asset) => {
       const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
-
       try {
         const response = await fetch(imageUrl)
         const blob = await response.blob()
@@ -110,13 +105,15 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
         link.click()
         document.body.removeChild(link)
         URL.revokeObjectURL(blobUrl)
-
-        if (i < assets.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200))
-        }
       } catch (error) {
         console.error(`Error downloading image ${asset.id}:`, error)
       }
+    }
+
+    // Download in batches with concurrency limit
+    for (let i = 0; i < assets.length; i += CONCURRENCY_LIMIT) {
+      const batch = assets.slice(i, i + CONCURRENCY_LIMIT)
+      await Promise.all(batch.map(downloadImage))
     }
   }
 

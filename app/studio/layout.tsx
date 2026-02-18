@@ -29,33 +29,24 @@ export default function RootLayout({
       return
     }
 
-    // Context finished loading but no user - wait for session with async/await
+    // Context finished loading but no user - check session once and redirect if needed
+    // Rely on onAuthStateChange listener in AuthContext instead of polling
     if (!loading && !user) {
-      const waitForSession = async () => {
-        let attempts = 0
-        const maxAttempts = 10 // 5 seconds total (10 * 500ms)
+      const checkSessionOnce = async () => {
+        const { data: { session: directSession } } = await supabase.auth.getSession()
         
-        while (attempts < maxAttempts) {
-          const { data: { session: directSession } } = await supabase.auth.getSession()
-          
-          if (directSession?.user) {
-            // Give context time to catch up (it will update via onAuthStateChange)
-            setCheckingSession(false)
-            return
-          }
-          
-          // Wait 500ms before next attempt
-          await new Promise(resolve => setTimeout(resolve, 500))
-          attempts++
+        if (directSession?.user) {
+          // Give context time to catch up (it will update via onAuthStateChange)
+          setCheckingSession(false)
+        } else {
+          // No session found, redirect immediately
+          router.push('/authenth/login')
         }
-        
-        // No session found after all attempts
-        router.push('/authenth/login')
       }
       
-      waitForSession()
+      checkSessionOnce()
     }
-  }, [user, loading, session, router])
+  }, [user, loading, router])
 
   // Show loading while context is loading or we're checking session
   if (loading || checkingSession) {

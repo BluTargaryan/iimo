@@ -87,7 +87,14 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
     <>
       <div className='relative h-fit rounded-lg overflow-hidden bg-foreground'>
         {/* Image placeholder - black rectangle */}
-        <Image src={src} alt={alt} width={300} height={300} className='w-full h-auto object-cover border-2 rounded-lg border-foreground' />
+        <Image 
+          src={src} 
+          alt={alt} 
+          width={300} 
+          height={300}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className='w-full h-auto object-cover border-2 rounded-lg border-foreground' 
+        />
 
         
         {/* White bar overlay at bottom with rounded ends */}
@@ -146,5 +153,5 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
   )
 }
 
-export default ImageGridItem
+export default React.memo(ImageGridItem)
 

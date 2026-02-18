@@ -6,6 +6,7 @@ import { useAuth } from '@/app/contexts/AuthContext'
 import {
   fetchNotificationsWithShoot,
   markNotificationAsRead,
+  markAllNotificationsAsRead,
   getNotificationTypeLabel,
   formatNotificationDate,
   type NotificationWithRelations,
@@ -13,11 +14,12 @@ import {
 
 interface NotificationsProps {
   onClose: () => void
+  onNotificationRead?: () => void
 }
 
 const PAGE_SIZE = 20
 
-const Notifications = ({ onClose }: NotificationsProps) => {
+const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
   const notificationsRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationWithRelations[]>([])
@@ -26,6 +28,7 @@ const Notifications = ({ onClose }: NotificationsProps) => {
   const [error, setError] = useState<string | null>(null)
   const [offset, setOffset] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [markingAllAsRead, setMarkingAllAsRead] = useState(false)
 
   const loadNotifications = useCallback(
     async (isLoadMore = false) => {
@@ -93,8 +96,38 @@ const Notifications = ({ onClose }: NotificationsProps) => {
       setNotifications((prev) =>
         prev.map((item) => (item.id === n.id ? { ...item, status: 'read' as const } : item))
       )
+      onNotificationRead?.()
     }
   }
+
+  const handleMarkAllAsRead = async () => {
+    if (!user?.id) return
+    
+    setMarkingAllAsRead(true)
+    const { error: updateError } = await markAllNotificationsAsRead(user.id)
+    
+    if (!updateError) {
+      // Update all notifications in state to 'read'
+      setNotifications((prev) =>
+        prev.map((item) => 
+          item.status === 'pending' || item.status === 'sent' 
+            ? { ...item, status: 'read' as const } 
+            : item
+        )
+      )
+      // Trigger callback to update badge count
+      onNotificationRead?.()
+    } else {
+      setError('Failed to mark all notifications as read')
+    }
+    
+    setMarkingAllAsRead(false)
+  }
+
+  // Check if there are any unread notifications
+  const hasUnreadNotifications = notifications.some(
+    (n) => n.status === 'pending' || n.status === 'sent'
+  )
 
   return (
     <div
@@ -103,7 +136,19 @@ const Notifications = ({ onClose }: NotificationsProps) => {
         md:inset-x-10 md:top-20
         xl:inset-x-0 xl:max-w-[1144px] xl:mx-auto"
     >
-      <h2>Notifications</h2>
+      <div className="row-flex justify-between items-center">
+        <h2>Notifications</h2>
+        {hasUnreadNotifications && (
+          <Button
+            type="button"
+            className="border border-foreground text-foreground px-4 py-2 text-sm"
+            onClick={handleMarkAllAsRead}
+            disabled={markingAllAsRead}
+          >
+            {markingAllAsRead ? 'Marking...' : 'Mark all as seen'}
+          </Button>
+        )}
+      </div>
 
       <div className="col-flex gap-3 h-30 overflow-y-scroll xl:h-50">
         {loading ? (

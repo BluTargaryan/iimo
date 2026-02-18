@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { fetchShoots, type Shoot } from '@/app/utils/shootOperations'
-import { fetchAssets, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
+import { fetchAssets, fetchAssetsForShoots, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import Toast from '@/app/components/sections/Toast'
@@ -38,24 +38,23 @@ const Shoots = () => {
       const shootsData = data || []
       setShoots(shootsData)
 
-      // Fetch watermarked images for all shoots in parallel
-      const thumbnailPromises = shootsData.map(async (shoot) => {
-        const { data: assets } = await fetchAssets(shoot.id)
-        if (assets && assets.length > 0) {
+      // Batch fetch assets for all shoots in one query (eliminates N+1)
+      const shootIds = shootsData.map(shoot => shoot.id)
+      const { data: assetsByShoot } = await fetchAssetsForShoots(shootIds)
+      
+      const thumbnailMap: Record<string, string[]> = {}
+      shootsData.forEach((shoot) => {
+        const assets = assetsByShoot?.[shoot.id] || []
+        if (assets.length > 0) {
           // Get first 4 watermarked images, falling back to regular image if watermarked not available
           const thumbnails = assets.slice(0, 4).map(asset => {
             const watermarkedUrl = getWatermarkedImageUrl(asset.watermarked_image)
             return watermarkedUrl || getAssetUrl(asset.image)
           })
-          return { shootId: shoot.id, thumbnails }
+          thumbnailMap[shoot.id] = thumbnails
+        } else {
+          thumbnailMap[shoot.id] = []
         }
-        return { shootId: shoot.id, thumbnails: [] }
-      })
-
-      const thumbnailResults = await Promise.all(thumbnailPromises)
-      const thumbnailMap: Record<string, string[]> = {}
-      thumbnailResults.forEach(({ shootId, thumbnails }) => {
-        thumbnailMap[shootId] = thumbnails
       })
       setShootThumbnails(thumbnailMap)
       setLoading(false)
@@ -64,13 +63,13 @@ const Shoots = () => {
     loadShoots()
   }, [user?.id, activeTab])
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     setShowToast(true)
-  }
+  }, [])
 
-  const handleCloseToast = () => {
+  const handleCloseToast = useCallback(() => {
     setShowToast(false)
-  }
+  }, [])
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>

@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  images:{
+  images: {
     remotePatterns: [
       {
         protocol: 'https',
@@ -13,6 +12,18 @@ const nextConfig: NextConfig = {
         hostname: 'daulvmqewulpkwgwjlyr.supabase.co',
       },
     ],
+  },
+  // Enable modern JavaScript output (ES2020+) - reduces legacy JavaScript
+  swcMinify: true,
+  compiler: {
+    // Remove console.logs in production (saves bytes)
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
+  },
+  // Optimize package imports to reduce bundle size
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js', '@supabase/ssr'],
   },
 };
 

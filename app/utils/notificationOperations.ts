@@ -123,6 +123,33 @@ export async function markNotificationAsRead(
 }
 
 /**
+ * Mark all unread notifications as read for a user.
+ */
+export async function markAllNotificationsAsRead(
+  userId: string
+): Promise<{ error: Error | null }> {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ status: 'read' })
+      .eq('user_id', userId)
+      .in('status', ['pending', 'sent'])
+
+    if (error) {
+      console.error('Error marking all notifications as read:', error)
+      return { error: new Error(error.message) }
+    }
+
+    return { error: null }
+  } catch (error) {
+    console.error('Unexpected error marking all notifications as read:', error)
+    return {
+      error: error instanceof Error ? error : new Error('Failed to update notifications'),
+    }
+  }
+}
+
+/**
  * Archive a notification.
  */
 export async function archiveNotification(

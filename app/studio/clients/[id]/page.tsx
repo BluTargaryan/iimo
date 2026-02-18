@@ -15,12 +15,14 @@ import {
   type Note,
 } from '@/app/utils/clientOperations'
 import { fetchShootsByClient, type Shoot } from '@/app/utils/shootOperations'
-import { fetchAssets, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
+import { fetchAssets, fetchAssetsForShoots, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
+import { supabase } from '@/app/utils/supabase'
 import Button from '@/app/components/atoms/Button'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import ArchiveConfirmationModal from '@/app/components/atoms/ArchiveConfirmationModal'
 import Toast from '@/app/components/sections/Toast'
+import { formatDateShort } from '@/app/utils/format'
 
 interface ClientPageProps {
   params: Promise<{
@@ -88,9 +90,12 @@ const ClientPage = ({ params }: ClientPageProps) => {
     const loadShoots = async () => {
       setShootsLoading(true)
       
-      // Fetch total count (all shoots regardless of status)
-      const { data: allShoots } = await fetchShootsByClient(client.id)
-      setTotalShootCount(allShoots?.length || 0)
+      // Fetch total count using count query (more efficient)
+      const { count } = await supabase
+        .from('shoots')
+        .select('*', { count: 'exact', head: true })
+        .eq('client_id', client.id)
+      setTotalShootCount(count || 0)
       
       // Fetch filtered shoots for current tab
       const { data, error: fetchError } = await fetchShootsByClient(
@@ -109,24 +114,23 @@ const ClientPage = ({ params }: ClientPageProps) => {
       const shootsData = data || []
       setShoots(shootsData)
 
-      // Fetch watermarked images for all shoots in parallel
-      const thumbnailPromises = shootsData.map(async (shoot) => {
-        const { data: assets } = await fetchAssets(shoot.id)
-        if (assets && assets.length > 0) {
+      // Batch fetch assets for all shoots in one query
+      const shootIds = shootsData.map(shoot => shoot.id)
+      const { data: assetsByShoot } = await fetchAssetsForShoots(shootIds)
+      
+      const thumbnailMap: Record<string, string[]> = {}
+      shootsData.forEach((shoot) => {
+        const assets = assetsByShoot?.[shoot.id] || []
+        if (assets.length > 0) {
           // Get first 4 watermarked images, falling back to regular image if watermarked not available
           const thumbnails = assets.slice(0, 4).map(asset => {
             const watermarkedUrl = getWatermarkedImageUrl(asset.watermarked_image)
             return watermarkedUrl || getAssetUrl(asset.image)
           })
-          return { shootId: shoot.id, thumbnails }
+          thumbnailMap[shoot.id] = thumbnails
+        } else {
+          thumbnailMap[shoot.id] = []
         }
-        return { shootId: shoot.id, thumbnails: [] }
-      })
-
-      const thumbnailResults = await Promise.all(thumbnailPromises)
-      const thumbnailMap: Record<string, string[]> = {}
-      thumbnailResults.forEach(({ shootId, thumbnails }) => {
-        thumbnailMap[shootId] = thumbnails
       })
       setShootThumbnails(thumbnailMap)
       setShootsLoading(false)
@@ -135,10 +139,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
     loadShoots()
   }, [client?.id, activeShootTab])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })
-  }
+  // formatDate moved to utils/format.ts
 
   const handleEditClick = () => {
     router.push(`/studio/clients/${id}/edit`)
@@ -300,7 +301,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
           <div className='col-flex gap-2 flex-1'>
             <h1 className='text-2xl xl:text-3xl font-bold'>{client.name}</h1>
             <div className='col-flex gap-1 text-sm md:text-base'>
-              <span>Added on {formatDate(client.created_at)}, has {totalShootCount} {totalShootCount === 1 ? 'shoot' : 'shoots'}</span>
+              <span>Added on {formatDateShort(client.created_at)}, has {totalShootCount} {totalShootCount === 1 ? 'shoot' : 'shoots'}</span>
               {client.email && (
                 <span>
                   Contact : <a href={`mailto:${client.email}`} className='underline'>{client.email}</a>

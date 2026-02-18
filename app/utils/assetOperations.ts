@@ -261,6 +261,54 @@ export async function fetchAssets(
 }
 
 /**
+ * Batch fetch assets for multiple shoots (optimizes N+1 queries)
+ * Returns a Record mapping shootId to Asset[]
+ */
+export async function fetchAssetsForShoots(
+  shootIds: string[]
+): Promise<{ data: Record<string, Asset[]> | null; error: Error | null }> {
+  try {
+    if (shootIds.length === 0) {
+      return { data: {}, error: null }
+    }
+
+    const { data, error } = await supabase
+      .from('assets')
+      .select('*')
+      .in('shoot_id', shootIds)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error batch fetching assets:', error)
+      return { data: null, error: new Error(error.message) }
+    }
+
+    // Group assets by shoot_id
+    const grouped: Record<string, Asset[]> = {}
+    shootIds.forEach(shootId => {
+      grouped[shootId] = []
+    })
+
+    if (data) {
+      data.forEach((asset: Asset) => {
+        if (!grouped[asset.shoot_id]) {
+          grouped[asset.shoot_id] = []
+        }
+        grouped[asset.shoot_id].push(asset)
+      })
+    }
+
+    return { data: grouped, error: null }
+  } catch (error) {
+    console.error('Unexpected error batch fetching assets:', error)
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error('Failed to batch fetch assets'),
+    }
+  }
+}
+
+/**
  * Fetch a single asset by ID
  */
 export async function fetchAssetById(

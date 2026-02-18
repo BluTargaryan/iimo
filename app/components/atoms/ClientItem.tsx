@@ -1,6 +1,7 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 import Button from './Button'
+import { formatDateShort } from '@/app/utils/format'
 
 interface ClientItemProps {
   id: string
@@ -23,10 +24,7 @@ const ClientItem = ({ id, name, email, createdAt, status = 'active', onArchive, 
     router.push(`/studio/clients/${id}/edit`)
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })
-  }
+  // formatDate moved to utils/format.ts
 
   return (
     <div className='col-flex gap-4'>
@@ -42,7 +40,7 @@ const ClientItem = ({ id, name, email, createdAt, status = 'active', onArchive, 
 
         <div className='col-flex gap-1 text-xs'>
         {email && <span>Email: {email}</span>}
-        <span>Created at: {formatDate(createdAt)}</span>
+        <span>Created at: {formatDateShort(createdAt)}</span>
         </div>
 
         <div className='row-flex gap-2'>
@@ -70,4 +68,4 @@ const ClientItem = ({ id, name, email, createdAt, status = 'active', onArchive, 
   )
 }
 
-export default ClientItem
+export default React.memo(ClientItem)

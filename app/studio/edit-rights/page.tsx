@@ -8,7 +8,8 @@ import TextInput from '@/app/components/atoms/TextInput'
 import DateInput from '@/app/components/atoms/DateInput'
 import Textarea from '@/app/components/atoms/Textarea'
 import FileInput from '@/app/components/atoms/FileInput'
-import PDFViewer from '@/app/components/atoms/PDFViewer'
+import dynamic from 'next/dynamic'
+const PDFViewer = dynamic(() => import('@/app/components/atoms/PDFViewer'), { ssr: false })
 import Button from '@/app/components/atoms/Button'
 
 const EditRightsPage = () => {
