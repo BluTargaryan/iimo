@@ -176,7 +176,8 @@ const ThumbnailUpload = ({
             src={folderIcon} 
             alt="folder" 
             width={20} 
-            height={20} 
+            height={20}
+            sizes="20px"
             className={`w-auto h-4 ${disabled ? 'opacity-50' : ''}`}
           />
         </button>
@@ -186,19 +187,17 @@ const ThumbnailUpload = ({
         <>
           <div className="w-full row-flex gap-4.5 justify-end">
             <div className="relative w-24 h-24 rounded-lg shrink-0">
-              <Image
+              <img
                 src={URL.createObjectURL(thumbnail)}
                 alt="Thumbnail"
-                width={96}
-                height={96}
-                className="w-full h-auto "
+                className="w-full h-auto"
               />
               <button
                 type="button"
                 onClick={handleRemoveThumbnail}
                 className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background flex-centerize hover:opacity-70"
               >
-                <Image src={closeIcon} alt="close" width={12} height={12} className="w-3 h-3" />
+                <Image src={closeIcon} alt="close" width={12} height={12} sizes="12px" className="w-3 h-3" />
               </button>
             </div>
             <Button
@@ -217,11 +216,9 @@ const ThumbnailUpload = ({
             <>
               {compositedImageUrl ? (
                 <div className="relative w-full rounded-lg h-fit">
-                  <Image
+                  <img
                     src={compositedImageUrl}
                     alt="Composited preview"
-                    width={400}
-                    height={225}
                     className="w-full h-auto"
                   />
                   <button
@@ -229,7 +226,7 @@ const ThumbnailUpload = ({
                     onClick={() => setShowPreview(false)}
                     className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background flex-centerize hover:opacity-70"
                   >
-                    <Image src={closeIcon} alt="close" width={12} height={12} className="w-3 h-3" />
+                    <Image src={closeIcon} alt="close" width={12} height={12} sizes="12px" className="w-3 h-3" />
                   </button>
                 </div>
               ) : (

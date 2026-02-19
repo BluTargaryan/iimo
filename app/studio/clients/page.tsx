@@ -1,13 +1,16 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { fetchClients, archiveClient, restoreClient, type Client } from '@/app/utils/clientOperations'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
 import Toast from '@/app/components/sections/Toast'
 import ClientItem from '@/app/components/atoms/ClientItem'
-import ArchiveConfirmationModal from '@/app/components/atoms/ArchiveConfirmationModal'
-import NotesModal from '@/app/components/atoms/NotesModal'
+
+// Lazy load modals
+const ArchiveConfirmationModal = dynamic(() => import('@/app/components/atoms/ArchiveConfirmationModal'), { ssr: false })
+const NotesModal = dynamic(() => import('@/app/components/atoms/NotesModal'), { ssr: false })
 
 
 const Clients = () => {
@@ -24,15 +27,15 @@ const Clients = () => {
 
   const tabs = ['Active', 'Archived']
 
-  // Fetch clients when tab changes or component mounts
+  // Fetch all clients once on mount
   useEffect(() => {
     if (!user?.id) return
 
     const loadClients = async () => {
       setLoading(true)
       setError(null)
-      const status = activeTab === 'Active' ? 'active' : 'archived'
-      const { data, error: fetchError } = await fetchClients(user.id, status)
+      // Fetch all clients without status filter
+      const { data, error: fetchError } = await fetchClients(user.id)
       
       if (fetchError) {
         setError(fetchError.message)
@@ -44,27 +47,38 @@ const Clients = () => {
     }
 
     loadClients()
-  }, [user?.id, activeTab])
+  }, [user?.id]) // Removed activeTab dependency
 
-  const handleShare = () => {
+  // Filter clients by active tab in memory
+  const filteredClients = useMemo(() => {
+    return clients.filter(client => {
+      if (activeTab === 'Active') {
+        return client.status === 'active'
+      } else {
+        return client.status === 'archived'
+      }
+    })
+  }, [clients, activeTab])
+
+  const handleShare = useCallback(() => {
     setShowToast(true)
-  }
+  }, [])
 
-  const handleCloseToast = () => {
+  const handleCloseToast = useCallback(() => {
     setShowToast(false)
-  }
+  }, [])
 
-  const handleArchiveClick = (clientId: string) => {
+  const handleArchiveClick = useCallback((clientId: string) => {
     setSelectedClientId(clientId)
     setShowArchiveModal(true)
-  }
+  }, [])
 
-  const handleCloseArchiveModal = () => {
+  const handleCloseArchiveModal = useCallback(() => {
     setShowArchiveModal(false)
     setSelectedClientId(null)
-  }
+  }, [])
 
-  const handleConfirmArchive = async () => {
+  const handleConfirmArchive = useCallback(async () => {
     if (!selectedClientId || !user?.id) return
 
     setIsArchiving(true)
@@ -81,25 +95,29 @@ const Clients = () => {
       return
     }
 
-    // Refresh clients list
-    const status = activeTab === 'Active' ? 'active' : 'archived'
-    const { data } = await fetchClients(user.id, status)
-    setClients(data || [])
+    // Update local state instead of refetching
+    setClients(prevClients => 
+      prevClients.map(client => 
+        client.id === selectedClientId 
+          ? { ...client, status: isRestoring ? 'active' : 'archived' as 'active' | 'archived' }
+          : client
+      )
+    )
     
     setIsArchiving(false)
     setShowArchiveModal(false)
     setSelectedClientId(null)
-  }
+  }, [selectedClientId])
 
-  const handleNotesClick = (clientId: string) => {
+  const handleNotesClick = useCallback((clientId: string) => {
     setSelectedClientId(clientId)
     setShowNotesModal(true)
-  }
+  }, [])
 
-  const handleCloseNotesModal = () => {
+  const handleCloseNotesModal = useCallback(() => {
     setShowNotesModal(false)
     setSelectedClientId(null)
-  }
+  }, [])
 
   return (
     <main className='col-flex xl:max-w-[1144px] xl:mx-auto'>
@@ -128,13 +146,13 @@ xl:pb-4 xl:mb-22
   <div className='col-flex gap-4'>
     <p className='text-red-500'>Error: {error}</p>
   </div>
-) : clients.length === 0 ? (
+) : filteredClients.length === 0 ? (
   <div className='col-flex gap-4'>
     <p>No {activeTab.toLowerCase()} clients found.</p>
   </div>
 ) : (
   <div className='grid grid-cols-1 gap-12 lg:grid-cols-3 '>
-    {clients.map((client) => (
+    {filteredClients.map((client) => (
       <ClientItem
         key={client.id}
         id={client.id}

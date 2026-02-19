@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Remove X-Powered-By header
+  poweredByHeader: false,
   // Enable modern JavaScript output (ES2020+) - reduces legacy JavaScript
   swcMinify: true,
   compiler: {

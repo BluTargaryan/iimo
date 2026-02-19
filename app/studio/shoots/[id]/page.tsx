@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, use } from 'react'
+import React, { useState, useEffect, use, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { fetchShootById, updateShootStatus, type ShootWithClient } from '@/app/utils/shootOperations'
@@ -10,14 +10,14 @@ import { generateShareLink, getShareLinkByShootId, revokeShareLink, type ShareLi
 import dynamic from 'next/dynamic'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import Button from '@/app/components/atoms/Button'
-import DeleteAssetConfirmationModal from '@/app/components/atoms/DeleteAssetConfirmationModal'
-import RevokeLinkConfirmationModal from '@/app/components/atoms/RevokeLinkConfirmationModal'
-import ArchiveShootConfirmationModal from '@/app/components/atoms/ArchiveShootConfirmationModal'
 
 // Lazy load heavy components
 const PDFViewer = dynamic(() => import('@/app/components/atoms/PDFViewer'), { ssr: false })
 const UsageRightsContent = dynamic(() => import('@/app/components/atoms/UsageRightsContent'), { ssr: false })
-import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
+const DeleteAssetConfirmationModal = dynamic(() => import('@/app/components/atoms/DeleteAssetConfirmationModal'), { ssr: false })
+const RevokeLinkConfirmationModal = dynamic(() => import('@/app/components/atoms/RevokeLinkConfirmationModal'), { ssr: false })
+const ArchiveShootConfirmationModal = dynamic(() => import('@/app/components/atoms/ArchiveShootConfirmationModal'), { ssr: false })
+import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDFLazy'
 import Toast from '@/app/components/sections/Toast'
 import { formatDate } from '@/app/utils/format'
 import share from '@/app/assets/images/share.svg'
@@ -150,12 +150,12 @@ const ShootPage = ({ params }: ShootPageProps) => {
 
   // formatDate moved to utils/format.ts
 
-  const handleDeleteImage = (assetId: string) => {
+  const handleDeleteImage = useCallback((assetId: string) => {
     setAssetToDelete(assetId)
     setShowDeleteModal(true)
-  }
+  }, [])
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!assetToDelete) return
 
     const { error: deleteError } = await deleteAsset(assetToDelete)
@@ -173,30 +173,40 @@ const ShootPage = ({ params }: ShootPageProps) => {
     setShowToast(true)
     setShowDeleteModal(false)
     setAssetToDelete(null)
-  }
+  }, [assetToDelete, assets])
 
-  const handleCloseDeleteModal = () => {
+  const handleCloseDeleteModal = useCallback(() => {
     setShowDeleteModal(false)
     setAssetToDelete(null)
-  }
+  }, [])
 
-  const handleCloseToast = () => {
+  const handleCloseToast = useCallback(() => {
     setShowToast(false)
-  }
+  }, [])
 
-  const handleUploadImages = () => {
+  const handleUploadImages = useCallback(() => {
     router.push(`/studio/upload-assets?shootId=${id}`)
-  }
+  }, [router, id])
 
-  const handleAddUsageRights = () => {
+  const handleUploadImagesClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    handleUploadImages()
+  }, [handleUploadImages])
+
+  const handleAddUsageRights = useCallback(() => {
     router.push(`/studio/add-rights?shootId=${id}`)
-  }
+  }, [router, id])
 
-  const handleEditUsageRights = (rightsId: string) => {
+  const handleAddUsageRightsClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    handleAddUsageRights()
+  }, [handleAddUsageRights])
+
+  const handleEditUsageRights = useCallback((rightsId: string) => {
     router.push(`/studio/edit-rights?shootId=${id}&rightsId=${rightsId}`)
-  }
+  }, [router, id])
 
-  const handleSharePreview = async () => {
+  const handleSharePreview = useCallback(async () => {
     try {
       let shareUrl: string
       if (shareLink) {
@@ -229,13 +239,13 @@ const ShootPage = ({ params }: ShootPageProps) => {
       setToastMessage('Failed to copy preview link')
       setShowToast(true)
     }
-  }
+  }, [shareLink, id])
 
-  const handleRevokeLink = () => {
+  const handleRevokeLink = useCallback(() => {
     setShowRevokeModal(true)
-  }
+  }, [])
 
-  const handleConfirmRevoke = async () => {
+  const handleConfirmRevoke = useCallback(async () => {
     if (!shareLink) return
     const { error: revokeError } = await revokeShareLink(shareLink.id)
     if (revokeError) {
@@ -248,17 +258,17 @@ const ShootPage = ({ params }: ShootPageProps) => {
     setToastMessage('Share link revoked')
     setShowToast(true)
     setShowRevokeModal(false)
-  }
+  }, [shareLink])
 
-  const handleCloseRevokeModal = () => {
+  const handleCloseRevokeModal = useCallback(() => {
     setShowRevokeModal(false)
-  }
+  }, [])
 
-  const handleArchiveShoot = () => {
+  const handleArchiveShoot = useCallback(() => {
     setShowArchiveModal(true)
-  }
+  }, [])
 
-  const handleConfirmArchive = async () => {
+  const handleConfirmArchive = useCallback(async () => {
     setIsArchiving(true)
     const isRestoring = shootData?.status === 'archived'
     const newStatus = isRestoring ? 'active' : 'archived'
@@ -280,54 +290,69 @@ const ShootPage = ({ params }: ShootPageProps) => {
     setShowToast(true)
     setIsArchiving(false)
     setShowArchiveModal(false)
-  }
+  }, [id, shootData?.status])
 
-  const handleCloseArchiveModal = () => {
+  const handleCloseArchiveModal = useCallback(() => {
     setShowArchiveModal(false)
-  }
+  }, [])
 
-  const handleDownloadAllImages = async () => {
+  const handleDownloadAgreement = useCallback(() => {
+    const rightsWithContract = usageRights.find(rights => rights.contract)
+    const contractUrl = rightsWithContract?.contract || null
+    if (contractUrl) {
+      const link = document.createElement('a')
+      link.href = contractUrl
+      link.download = 'usage-agreement.pdf'
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }, [usageRights])
+
+  const handleDownloadAllImages = useCallback(async () => {
     if (assets.length === 0) return
 
-    for (let i = 0; i < assets.length; i++) {
-      const asset = assets[i]
-      // Use watermarked image if available, otherwise fall back to regular image
+    const concurrencyLimit = 5
+    let completed = 0
+
+    const downloadImage = async (asset: Asset, index: number) => {
       const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
       
       try {
-        // Fetch the image
         const response = await fetch(imageUrl)
         const blob = await response.blob()
-        
-        // Create a temporary URL for the blob
         const blobUrl = URL.createObjectURL(blob)
         
-        // Extract filename from URL or use asset ID
         const urlParts = imageUrl.split('/')
         const urlFilename = urlParts[urlParts.length - 1].split('?')[0]
-        const filename = urlFilename || `asset-${asset.id}.jpg`
+        const filename = urlFilename || `${shootData?.title || 'image'}_${index + 1}.jpg`
         
-        // Create a temporary anchor element and trigger download
         const link = document.createElement('a')
         link.href = blobUrl
         link.download = filename
         document.body.appendChild(link)
         link.click()
-        
-        // Clean up
         document.body.removeChild(link)
         URL.revokeObjectURL(blobUrl)
         
-        // Small delay between downloads to prevent browser blocking
-        if (i < assets.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 200))
-        }
+        completed++
       } catch (error) {
         console.error(`Error downloading image ${asset.id}:`, error)
-        // Continue with next image even if one fails
       }
     }
-  }
+
+    // Process in batches of concurrencyLimit
+    for (let i = 0; i < assets.length; i += concurrencyLimit) {
+      const batch = assets.slice(i, i + concurrencyLimit)
+      await Promise.all(batch.map((asset, idx) => downloadImage(asset, i + idx)))
+      
+      // Small delay between batches to avoid browser throttling
+      if (i + concurrencyLimit < assets.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
+    }
+  }, [assets, shootData?.title])
 
   if (loading) {
     return (
@@ -373,7 +398,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
             disabled={shareLinkLoading}
           >
             <span>{shareLink ? 'Copy share link' : 'Share to client'}</span>
-            <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
+            <Image src={share} alt='share' width={20} height={20} sizes="20px" className='h-4 w-auto' />
           </Button>
             <Button 
               className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
@@ -437,10 +462,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
                 </div>
                 <Button 
                   className='bg-foreground text-background w-full p-3.5 md:w-[322px] mt-2'
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleUploadImages()
-                  }}
+                  onClick={handleUploadImagesClick}
                 >
                   Upload images
                 </Button>
@@ -501,17 +523,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
                 {/* Download Agreement Button */}
                 <Button 
                   className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-                  onClick={() => {
-                    if (contractUrl) {
-                      const link = document.createElement('a')
-                      link.href = contractUrl
-                      link.download = 'usage-agreement.pdf'
-                      link.target = '_blank'
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    }
-                  }}
+                  onClick={handleDownloadAgreement}
                 >
                   Download agreement
                 </Button>
@@ -545,10 +557,7 @@ const ShootPage = ({ params }: ShootPageProps) => {
                 </div>
                 <Button 
                   className='bg-foreground text-background w-full p-3.5 md:w-[322px] mt-2'
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleAddUsageRights()
-                  }}
+                  onClick={handleAddUsageRightsClick}
                 >
                   Add Usage Rights
                 </Button>

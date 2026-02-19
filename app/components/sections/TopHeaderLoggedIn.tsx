@@ -95,7 +95,7 @@ const TopHeader = () => {
             </span>
             <span className='row-flex gap-1 items-center cursor-pointer hover:underline' onClick={handleLogout}>
             <span className=''>Logout</span>
-            <Image src={logoutIcon} alt="logout" width={20} height={20} className='w-3 h-auto'/>
+            <Image src={logoutIcon} alt="logout" width={20} height={20} sizes="20px" className='w-3 h-auto'/>
             </span>
         </span>
     </header>

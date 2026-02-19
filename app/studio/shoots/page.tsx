@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/app/contexts/AuthContext'
 import { fetchShoots, type Shoot } from '@/app/utils/shootOperations'
 import { fetchAssets, fetchAssetsForShoots, getWatermarkedImageUrl, getAssetUrl } from '@/app/utils/assetOperations'
@@ -26,7 +26,8 @@ const Shoots = () => {
     const loadShoots = async () => {
       setLoading(true)
       setError(null)
-      const { data, error: fetchError } = await fetchShoots(user.id, activeTab as 'Active' | 'Expiring' | 'Expired' | 'Archived')
+      // Fetch all shoots without status filter
+      const { data, error: fetchError } = await fetchShoots(user.id)
       
       if (fetchError) {
         setError(fetchError.message)
@@ -61,7 +62,19 @@ const Shoots = () => {
     }
 
     loadShoots()
-  }, [user?.id, activeTab])
+  }, [user?.id]) // Removed activeTab dependency
+
+  // Filter shoots by active tab in memory
+  const filteredShoots = useMemo(() => {
+    const statusMap: Record<string, string> = {
+      'Active': 'active',
+      'Expiring': 'expiring',
+      'Expired': 'expired',
+      'Archived': 'archived'
+    }
+    const targetStatus = statusMap[activeTab]
+    return shoots.filter(shoot => shoot.status === targetStatus)
+  }, [shoots, activeTab])
 
   const handleShare = useCallback(() => {
     setShowToast(true)
@@ -97,13 +110,13 @@ xl:pb-4 xl:mb-22
   <div className='col-flex items-center justify-center py-12'>
     <span className='text-red-500'>Error: {error}</span>
   </div>
-) : shoots.length === 0 ? (
+) : filteredShoots.length === 0 ? (
   <div className='col-flex items-center justify-center py-12'>
-    <span>No shoots found</span>
+    <span>No {activeTab.toLowerCase()} shoots found</span>
   </div>
 ) : (
   <div className='grid grid-cols-1 gap-12 md:grid-cols-2  lg:grid-cols-3 '>
-    {shoots.map((shoot) => (
+    {filteredShoots.map((shoot) => (
       <ShootItem 
         key={shoot.id} 
         shoot={shoot} 

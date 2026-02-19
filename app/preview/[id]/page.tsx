@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, use } from 'react'
+import React, { useState, useEffect, use, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import ImageGridItem from '@/app/components/atoms/ImageGridItem'
 import Button from '@/app/components/atoms/Button'
@@ -8,7 +8,7 @@ import Button from '@/app/components/atoms/Button'
 // Lazy load heavy components
 const PDFViewer = dynamic(() => import('@/app/components/atoms/PDFViewer'), { ssr: false })
 const UsageRightsContent = dynamic(() => import('@/app/components/atoms/UsageRightsContent'), { ssr: false })
-import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDF'
+import { downloadUsageRightsPDF } from '@/app/components/atoms/UsageRightsPDFLazy'
 import { getShootIdByToken } from '@/app/utils/shareLinksOperations'
 import { fetchShootById, type ShootWithClient } from '@/app/utils/shootOperations'
 import { fetchAssets, getAssetUrl, getWatermarkedImageUrl, type Asset } from '@/app/utils/assetOperations'
@@ -84,10 +84,34 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
 
   // formatDate moved to utils/format.ts
 
-  const handleDownloadAllImages = async () => {
+  const handleTabClick = useCallback((tab: string) => {
+    setActiveTab(tab)
+  }, [])
+
+  const handleDownloadPDF = useCallback((rights: UsageRights) => {
+    if (shootData) {
+      downloadUsageRightsPDF(shootData, rights)
+    }
+  }, [shootData])
+
+  const handleDownloadAgreement = useCallback(() => {
+    const rightsWithContract = usageRights.find(rights => rights.contract)
+    const contractUrl = rightsWithContract?.contract || null
+    if (contractUrl) {
+      const link = document.createElement('a')
+      link.href = contractUrl
+      link.download = 'usage-agreement.pdf'
+      link.target = '_blank'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+  }, [usageRights])
+
+  const handleDownloadAllImages = useCallback(async () => {
     if (assets.length === 0) return
 
-    const CONCURRENCY_LIMIT = 3
+    const CONCURRENCY_LIMIT = 5
     const downloadImage = async (asset: Asset) => {
       const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
       try {
@@ -114,8 +138,13 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
     for (let i = 0; i < assets.length; i += CONCURRENCY_LIMIT) {
       const batch = assets.slice(i, i + CONCURRENCY_LIMIT)
       await Promise.all(batch.map(downloadImage))
+      
+      // Small delay between batches to avoid browser throttling
+      if (i + CONCURRENCY_LIMIT < assets.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
+      }
     }
-  }
+  }, [assets])
 
   if (loading) {
     return (
@@ -176,7 +205,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
         {tabs.map((tab) => (
           <span
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => handleTabClick(tab)}
             className={`text-xl xl:text-3xl cursor-pointer ${activeTab === tab ? 'font-bold' : ''}`}
           >
             {tab}
@@ -193,13 +222,16 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
           ) : (
             <>
               <div className='grid grid-cols-2 gap-4.5 mb-8 md:gap-7.5 xl:grid-cols-3'>
-                {assets.map((asset) => {
+                {assets.map((asset, index) => {
                   const imageUrl = getWatermarkedImageUrl(asset.watermarked_image) || getAssetUrl(asset.image)
+                  const altText = shootData?.title 
+                    ? `${shootData.title} - Image ${index + 1}`
+                    : `Photo shoot image ${index + 1}`
                   return (
                     <ImageGridItem
                       key={asset.id}
                       src={imageUrl}
-                      alt={`Asset ${asset.id}`}
+                      alt={altText}
                     />
                   )
                 })}
@@ -228,15 +260,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
                 </div>
                 <Button
                   className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-                  onClick={() => {
-                    const link = document.createElement('a')
-                    link.href = contractUrl
-                    link.download = 'usage-agreement.pdf'
-                    link.target = '_blank'
-                    document.body.appendChild(link)
-                    link.click()
-                    document.body.removeChild(link)
-                  }}
+                  onClick={handleDownloadAgreement}
                 >
                   Download agreement
                 </Button>
@@ -263,7 +287,7 @@ const PreviewPage = ({ params }: PreviewPageProps) => {
                   <UsageRightsContent shootData={shootData} usageRights={rights} />
                   <Button
                     className='bg-foreground text-background w-full p-3.5 md:w-[322px]'
-                    onClick={() => downloadUsageRightsPDF(shootData, rights)}
+                    onClick={() => handleDownloadPDF(rights)}
                   >
                     Download Usage Rights as PDF
                   </Button>

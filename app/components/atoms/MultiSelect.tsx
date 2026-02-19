@@ -98,7 +98,7 @@ const MultiSelect = ({
                     onClick={(e) => handleRemoveOption(val, e)}
                     className="hover:bg-foreground/20 rounded p-0.5"
                   >
-                    <Image src={closeIcon} alt="remove" width={12} height={12} className="w-3 h-3" />
+                    <Image src={closeIcon} alt="remove" width={12} height={12} sizes="12px" className="w-3 h-3" />
                   </button>
                 </span>
               ))
@@ -109,7 +109,7 @@ const MultiSelect = ({
             )}
           </div>
           <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-            <Image src={dropdownArrow} alt="dropdown arrow" width={12} height={8} className="w-3 h-2" />
+            <Image src={dropdownArrow} alt="dropdown arrow" width={12} height={8} sizes="12px" className="w-3 h-2" />
           </div>
         </div>
 

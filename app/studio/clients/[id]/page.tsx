@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useState, useEffect, use } from 'react'
+import React, { useState, useEffect, use, useCallback, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
 import {
@@ -20,9 +21,11 @@ import { supabase } from '@/app/utils/supabase'
 import Button from '@/app/components/atoms/Button'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
-import ArchiveConfirmationModal from '@/app/components/atoms/ArchiveConfirmationModal'
 import Toast from '@/app/components/sections/Toast'
 import { formatDateShort } from '@/app/utils/format'
+
+// Lazy load modal
+const ArchiveConfirmationModal = dynamic(() => import('@/app/components/atoms/ArchiveConfirmationModal'), { ssr: false })
 
 interface ClientPageProps {
   params: Promise<{
@@ -83,25 +86,15 @@ const ClientPage = ({ params }: ClientPageProps) => {
     loadData()
   }, [id])
 
-  // Fetch shoots when client is loaded and tab changes
+  // Fetch all shoots for client once on mount
   useEffect(() => {
     if (!client?.id) return
 
     const loadShoots = async () => {
       setShootsLoading(true)
       
-      // Fetch total count using count query (more efficient)
-      const { count } = await supabase
-        .from('shoots')
-        .select('*', { count: 'exact', head: true })
-        .eq('client_id', client.id)
-      setTotalShootCount(count || 0)
-      
-      // Fetch filtered shoots for current tab
-      const { data, error: fetchError } = await fetchShootsByClient(
-        client.id,
-        activeShootTab as 'Active' | 'Expiring' | 'Expired' | 'Archived'
-      )
+      // Fetch all shoots for this client (no status filter)
+      const { data, error: fetchError } = await fetchShootsByClient(client.id)
       
       if (fetchError) {
         console.error('Error fetching shoots:', fetchError)
@@ -113,6 +106,9 @@ const ClientPage = ({ params }: ClientPageProps) => {
 
       const shootsData = data || []
       setShoots(shootsData)
+
+      // Derive total count from fetched shoots
+      setTotalShootCount(shootsData.length)
 
       // Batch fetch assets for all shoots in one query
       const shootIds = shootsData.map(shoot => shoot.id)
@@ -137,23 +133,35 @@ const ClientPage = ({ params }: ClientPageProps) => {
     }
 
     loadShoots()
-  }, [client?.id, activeShootTab])
+  }, [client?.id]) // Removed activeShootTab dependency
+
+  // Filter shoots by active tab in memory
+  const filteredShoots = useMemo(() => {
+    const statusMap: Record<string, string> = {
+      'Active': 'active',
+      'Expiring': 'expiring',
+      'Expired': 'expired',
+      'Archived': 'archived'
+    }
+    const targetStatus = statusMap[activeShootTab]
+    return shoots.filter(shoot => shoot.status === targetStatus)
+  }, [shoots, activeShootTab])
 
   // formatDate moved to utils/format.ts
 
-  const handleEditClick = () => {
+  const handleEditClick = useCallback(() => {
     router.push(`/studio/clients/${id}/edit`)
-  }
+  }, [router, id])
 
-  const handleArchiveClick = () => {
+  const handleArchiveClick = useCallback(() => {
     setShowArchiveModal(true)
-  }
+  }, [])
 
-  const handleCloseArchiveModal = () => {
+  const handleCloseArchiveModal = useCallback(() => {
     setShowArchiveModal(false)
-  }
+  }, [])
 
-  const handleConfirmArchive = async () => {
+  const handleConfirmArchive = useCallback(async () => {
     if (!client) return
 
     setIsArchiving(true)
@@ -180,66 +188,70 @@ const ClientPage = ({ params }: ClientPageProps) => {
 
     // Redirect to clients list after archiving
     router.push('/studio/clients')
-  }
+  }, [client, router])
 
-  const handleAddNoteClick = () => {
+  const handleAddNoteClick = useCallback(() => {
     setShowAddNoteForm(true)
-  }
+  }, [])
 
-  const handleSubmitNote = async () => {
+  const handleSubmitNote = useCallback(async () => {
     if (!noteText.trim() || !client) return
 
     setIsSubmittingNote(true)
 
     if (noteToEdit !== null) {
       // Update existing note
-      const { error } = await updateNote(noteToEdit, noteText)
+      const { data: updatedNote, error } = await updateNote(noteToEdit, noteText)
       if (error) {
         setError(error.message)
         setIsSubmittingNote(false)
         return
+      }
+      // Update local state instead of refetching
+      if (updatedNote) {
+        setNotes(prev => prev.map(n => n.id === noteToEdit ? updatedNote : n))
       }
       setNoteToEdit(null)
     } else {
       // Create new note
-      const { error } = await createNote(client.id, noteText)
+      const { data: newNote, error } = await createNote(client.id, noteText)
       if (error) {
         setError(error.message)
         setIsSubmittingNote(false)
         return
       }
+      // Update local state instead of refetching
+      if (newNote) {
+        setNotes(prev => [newNote, ...prev])
+      }
       setShowAddNoteForm(false)
     }
-
-    // Refresh notes list
-    const { data } = await fetchNotes(client.id)
-    setNotes(data || [])
 
     // Reset form
     setNoteText('')
     setIsSubmittingNote(false)
-  }
+  }, [noteText, noteToEdit, client])
 
-  const handleCancelNote = () => {
+  const handleCancelNote = useCallback(() => {
     setNoteText('')
     setShowAddNoteForm(false)
     setNoteToEdit(null)
-  }
+  }, [])
 
-  const handleEditNote = (noteId: string) => {
+  const handleEditNote = useCallback((noteId: string) => {
     const note = notes.find(n => n.id === noteId)
     if (note) {
       setNoteText(note.content)
       setNoteToEdit(noteId)
       setShowAddNoteForm(false) // Close add form if open
     }
-  }
+  }, [notes])
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = useCallback((noteId: string) => {
     setNoteToDelete(noteId)
-  }
+  }, [])
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (noteToDelete === null || !client) return
 
     const { error } = await deleteNote(noteToDelete)
@@ -249,23 +261,26 @@ const ClientPage = ({ params }: ClientPageProps) => {
       return
     }
 
-    // Refresh notes list
-    const { data } = await fetchNotes(client.id)
-    setNotes(data || [])
+    // Update local state instead of refetching
+    setNotes(prev => prev.filter(n => n.id !== noteToDelete))
     setNoteToDelete(null)
-  }
+  }, [noteToDelete, client])
 
-  const handleCancelDelete = () => {
+  const handleCancelDelete = useCallback(() => {
     setNoteToDelete(null)
-  }
+  }, [])
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     setShowToast(true)
-  }
+  }, [])
 
-  const handleCloseToast = () => {
+  const handleCloseToast = useCallback(() => {
     setShowToast(false)
-  }
+  }, [])
+
+  const handleAddShootClick = useCallback(() => {
+    router.push(`/studio/add-shoot?clientId=${client.id}`)
+  }, [router, client?.id])
 
   if (loading) {
     return (
@@ -455,7 +470,7 @@ const ClientPage = ({ params }: ClientPageProps) => {
           <h2 className='text-xl xl:text-2xl font-bold'>Shoots</h2>
           <Button 
             className='bg-foreground text-background px-4 py-2 xl:w-[238px]'
-            onClick={() => router.push(`/studio/add-shoot?clientId=${client.id}`)}
+            onClick={handleAddShootClick}
           >
             <span>Add shoot</span>
           </Button>
@@ -482,13 +497,13 @@ const ClientPage = ({ params }: ClientPageProps) => {
           <div className='col-flex items-center justify-center py-12'>
             <span>Loading shoots...</span>
           </div>
-        ) : shoots.length === 0 ? (
+        ) : filteredShoots.length === 0 ? (
           <div className='col-flex items-center justify-center py-12'>
-            <span>No shoots found</span>
+            <span>No {activeShootTab.toLowerCase()} shoots found</span>
           </div>
         ) : (
           <div className='grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-3'>
-            {shoots.map((shoot) => (
+            {filteredShoots.map((shoot) => (
               <ShootItem 
                 key={shoot.id} 
                 shoot={shoot} 

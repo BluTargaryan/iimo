@@ -111,7 +111,7 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
             className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'
             aria-label='Download image'
           >
-            <Image src={downloadIcon} alt='download' width={100} height={100} className='w-2.5 h-auto' />
+            <Image src={downloadIcon} alt='download' width={100} height={100} sizes="20px" className='w-2.5 h-auto' />
           </Button>
           </div>
           {onDelete && (
@@ -119,7 +119,7 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
               onClick={onDelete}
               className='bg-background border-2 border-foreground flex-centerize w-5.5 md:w-7'
             >
-              <Image src={closeIcon} alt='delete' width={100} height={100} className='w-2.5 h-auto' />
+              <Image src={closeIcon} alt='delete' width={100} height={100} sizes="20px" className='w-2.5 h-auto' />
             </Button>
           )}
         </div>
@@ -137,13 +137,14 @@ const ImageGridItem = ({ src = 'https://images.unsplash.com/photo-1761839256547-
               className='absolute top-4 right-4 z-10 w-8 h-8 flex-centerize bg-background border border-foreground rounded-full hover:opacity-70'
               aria-label='Close overlay'
             >
-              <Image src={closeIcon} alt='close' width={100} height={100} className='w-2.5 h-auto' />
+              <Image src={closeIcon} alt='close' width={100} height={100} sizes="20px" className='w-2.5 h-auto' />
             </button>
             <Image 
               src={src} 
               alt={alt} 
               width={800} 
-              height={800} 
+              height={800}
+              sizes="90vw"
               className='w-full h-full object-contain'
             />
           </div>

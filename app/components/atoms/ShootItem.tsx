@@ -61,7 +61,7 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
           </Button>
           <Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
             <span>Share</span>
-            <Image src={share} alt='share' width={20} height={20} className='h-4 w-auto' />
+            <Image src={share} alt='share' width={20} height={20} sizes="20px" className='h-4 w-auto' />
           </Button>
         </div>
     </div>

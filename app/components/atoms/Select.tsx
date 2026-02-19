@@ -91,7 +91,7 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
             {displayValue}
           </span>
           <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-            <Image src={dropdownArrow} alt="dropdown arrow" width={12} height={8} className="w-3 h-2" />
+            <Image src={dropdownArrow} alt="dropdown arrow" width={12} height={8} sizes="12px" className="w-3 h-2" />
           </div>
         </div>
 

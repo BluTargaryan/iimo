@@ -163,7 +163,7 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
           className='p-1.5 flex-centerize rounded-full w-fit bg-background border border-foreground'
           aria-label='Close notes'
         >
-          <Image src={closeIcon} alt='close' width={100} height={100} className='w-2 h-auto' />
+          <Image src={closeIcon} alt='close' width={100} height={100} sizes="16px" className='w-2 h-auto' />
         </button>
 
         {/* Header with title and Add note button */}

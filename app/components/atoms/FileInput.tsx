@@ -52,7 +52,7 @@ const FileInput = ({ id, name, label, placeholder = 'Select a file (pdf)', accep
           <span className={fileName ? 'text-foreground' : 'text-placeholder'}>
             {fileName || placeholder}
           </span>
-          <Image src={folderIcon} alt="folder" width={20} height={20} className="w-auto h-4" />
+          <Image src={folderIcon} alt="folder" width={20} height={20} sizes="20px" className="w-auto h-4" />
         </label>
       </div>
     </div>
