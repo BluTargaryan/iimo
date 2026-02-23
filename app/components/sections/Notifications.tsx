@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useCallback, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Button from '../atoms/Button'
 import { useAuth } from '@/app/contexts/AuthContext'
 import {
@@ -20,6 +21,7 @@ interface NotificationsProps {
 const PAGE_SIZE = 20
 
 const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
+  const router = useRouter()
   const notificationsRef = useRef<HTMLDivElement>(null)
   const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationWithRelations[]>([])
@@ -138,7 +140,18 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
     >
       <div className="row-flex justify-between items-center">
         <h2>Notifications</h2>
-        {hasUnreadNotifications && (
+        <span className="row-flex items-center gap-3">
+          <Button
+            type="button"
+            className="border border-foreground cursor-pointer text-foreground px-4 py-2 text-sm"
+            onClick={() => {
+              onClose()
+              router.push('/studio/events')
+            }}
+          >
+            View all events
+          </Button>
+          {hasUnreadNotifications && (
           <Button
             type="button"
             className="border border-foreground text-foreground px-4 py-2 text-sm"
@@ -147,7 +160,8 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
           >
             {markingAllAsRead ? 'Marking...' : 'Mark all as seen'}
           </Button>
-        )}
+          )}
+        </span>
       </div>
 
       <div className="col-flex gap-3 h-30 overflow-y-scroll xl:h-50">
@@ -197,7 +211,7 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
       {!loading && !error && hasMore && notifications.length > 0 && (
         <Button
           type="button"
-          className="border border-foreground text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize"
+          className="border border-foreground cursor-pointer text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize"
           onClick={handleLoadMore}
           disabled={loadingMore}
         >
