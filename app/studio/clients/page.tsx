@@ -16,6 +16,7 @@ const NotesModal = dynamic(() => import('@/app/components/atoms/NotesModal'), { 
 const Clients = () => {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('Active')
+  const [searchQuery, setSearchQuery] = useState('')
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -49,16 +50,26 @@ const Clients = () => {
     loadClients()
   }, [user?.id]) // Removed activeTab dependency
 
-  // Filter clients by active tab in memory
+  // Filter clients by active tab and search query in memory
   const filteredClients = useMemo(() => {
-    return clients.filter(client => {
+    let result = clients.filter(client => {
       if (activeTab === 'Active') {
         return client.status === 'active'
       } else {
         return client.status === 'archived'
       }
     })
-  }, [clients, activeTab])
+    const q = searchQuery.trim()
+    if (q !== '') {
+      const lower = q.toLowerCase()
+      result = result.filter(
+        client =>
+          (client.name || '').toLowerCase().includes(lower) ||
+          (client.email || '').toLowerCase().includes(lower)
+      )
+    }
+    return result
+  }, [clients, activeTab, searchQuery])
 
   const handleShare = useCallback(() => {
     setShowToast(true)
@@ -130,11 +141,30 @@ xl:pb-4 xl:mb-22
     <span
       key={tab}
       onClick={() => setActiveTab(tab)}
-      className={`text-xl xl:text-3xl ${activeTab === tab ? 'font-bold' : ''}`}
+      className={`text-xl xl:text-3xl cursor-pointer ${activeTab === tab ? 'font-bold' : ''}`}
     >
       {tab}
     </span>
   ))}
+  <div className='row-flex items-center gap-2 md:ml-auto'>
+    <input
+      type='text'
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      placeholder='Search clients...'
+      className='border border-foreground rounded-3xl p-2.5 md:p-3.5 text-foreground bg-transparent focus:outline-none min-w-0 max-w-[240px]'
+    />
+    {searchQuery.trim() !== '' && (
+      <button
+        type='button'
+        onClick={() => setSearchQuery('')}
+        className='text-foreground hover:opacity-70 p-1'
+        aria-label='Clear search'
+      >
+        ×
+      </button>
+    )}
+  </div>
 </div>
 
 
@@ -148,7 +178,11 @@ xl:pb-4 xl:mb-22
   </div>
 ) : filteredClients.length === 0 ? (
   <div className='col-flex gap-4'>
-    <p>No {activeTab.toLowerCase()} clients found.</p>
+    <p>
+      {searchQuery.trim() !== ''
+        ? `No clients match your search for "${searchQuery.trim()}"`
+        : `No ${activeTab.toLowerCase()} clients found.`}
+    </p>
   </div>
 ) : (
   <div className='grid grid-cols-1 gap-12 lg:grid-cols-3 '>
