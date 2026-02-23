@@ -237,7 +237,7 @@ const ThumbnailUpload = ({
                     onClick={() => setShowPreview(false)}
                     className="absolute top-1 right-1 w-5 h-5 rounded-full bg-background flex-centerize hover:opacity-70"
                   >
-                    <Image src={closeIcon} alt="close" width={12} height={12} className="w-3 h-3" />
+                    <Image src={closeIcon} alt="close" width={12} height={12} sizes="12px" className="w-3 h-3" />
                   </button>
                 </div>
               )}
