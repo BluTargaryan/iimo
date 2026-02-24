@@ -4,10 +4,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Button from './Button'
 import share from '@/app/assets/images/share.svg'
-import { type Shoot } from '@/app/utils/shootOperations'
+import { type Shoot, type ShootWithClient } from '@/app/utils/shootOperations'
+import { formatDate } from '@/app/utils/format'
 
 interface ShootItemProps {
-  shoot: Shoot
+  shoot: ShootWithClient
   onShare?: () => void
   thumbnailUrls?: string[] // Optional: first few asset thumbnails
 }
@@ -24,6 +25,12 @@ const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
   return (
     <div className='col-flex gap-2 md:gap-4'>
         <h2>{shoot.title || 'Untitled Shoot'}</h2>
+        <p className=''>
+          {shoot.clients?.name && <span>{shoot.clients.name}</span>}
+          {shoot.clients?.name && shoot.shoot_date && ' · '}
+          {shoot.shoot_date && <span>{formatDate(shoot.shoot_date)}</span>}
+          {!shoot.clients?.name && !shoot.shoot_date && '\u00A0'}
+        </p>
 
         {displayThumbnails.length > 0 ? (
           <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>

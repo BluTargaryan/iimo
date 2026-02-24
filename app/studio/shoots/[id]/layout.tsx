@@ -15,7 +15,7 @@ export async function generateMetadata(
   const { id: shootId } = resolvedParams
   
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = await createSupabaseServerClient()
     
     const { data: shoot, error } = await supabase
       .from('shoots')

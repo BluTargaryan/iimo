@@ -15,7 +15,7 @@ export async function generateMetadata(
   const { params } = props;
   const resolvedParams = await params;
   const { id: shareToken } = resolvedParams;
-  const supabase = createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient();
   
   try {
     // Resolve share token to shoot_id
