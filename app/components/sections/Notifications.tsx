@@ -1,9 +1,8 @@
 'use client'
 
 import React, { useEffect, useRef, useCallback, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import Button from '../atoms/Button'
-import { useAuth } from '@/app/contexts/AuthContext'
 import {
   fetchNotificationsWithShoot,
   markNotificationAsRead,
@@ -14,16 +13,15 @@ import {
 } from '@/app/utils/notificationOperations'
 
 interface NotificationsProps {
+  userId: string
   onClose: () => void
   onNotificationRead?: () => void
 }
 
 const PAGE_SIZE = 20
 
-const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
-  const router = useRouter()
+const Notifications = ({ userId, onClose, onNotificationRead }: NotificationsProps) => {
   const notificationsRef = useRef<HTMLDivElement>(null)
-  const { user } = useAuth()
   const [notifications, setNotifications] = useState<NotificationWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -34,7 +32,7 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
 
   const loadNotifications = useCallback(
     async (isLoadMore = false) => {
-      if (!user?.id) return
+      if (!userId) return
 
       if (isLoadMore) {
         setLoadingMore(true)
@@ -44,7 +42,7 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
       }
 
       const currentOffset = isLoadMore ? offset : 0
-      const { data, error: fetchError } = await fetchNotificationsWithShoot(user.id, {
+      const { data, error: fetchError } = await fetchNotificationsWithShoot(userId, {
         limit: PAGE_SIZE,
         offset: currentOffset,
       })
@@ -69,12 +67,12 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
       setLoading(false)
       setLoadingMore(false)
     },
-    [user?.id, offset]
+    [userId, offset]
   )
 
   useEffect(() => {
     loadNotifications()
-  }, [user?.id])
+  }, [userId])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,10 +101,10 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
   }
 
   const handleMarkAllAsRead = async () => {
-    if (!user?.id) return
-    
+    if (!userId) return
+
     setMarkingAllAsRead(true)
-    const { error: updateError } = await markAllNotificationsAsRead(user.id)
+    const { error: updateError } = await markAllNotificationsAsRead(userId)
     
     if (!updateError) {
       // Update all notifications in state to 'read'
@@ -141,16 +139,13 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
       <div className="row-flex justify-between items-center">
         <h2>Notifications</h2>
         <span className="row-flex items-center gap-3">
-          <Button
-            type="button"
-            className="border border-foreground cursor-pointer text-foreground px-4 py-2 text-sm"
-            onClick={() => {
-              onClose()
-              router.push('/studio/events')
-            }}
+          <Link
+            href="/studio/events"
+            onClick={() => onClose()}
+            className="border-b border-foreground cursor-pointer text-foreground text-sm inline-flex items-center justify-center md:text-base"
           >
             View all events
-          </Button>
+          </Link>
           {hasUnreadNotifications && (
           <Button
             type="button"
@@ -211,7 +206,7 @@ const Notifications = ({ onClose, onNotificationRead }: NotificationsProps) => {
       {!loading && !error && hasMore && notifications.length > 0 && (
         <Button
           type="button"
-          className="border border-foreground cursor-pointer text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize"
+          className="border border-foreground cursor-pointer text-foreground w-1/2 p-3! row-flex gap-2 flex-centerize md:w-1/4"
           onClick={handleLoadMore}
           disabled={loadingMore}
         >

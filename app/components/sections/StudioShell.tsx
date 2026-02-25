@@ -1,60 +1,28 @@
-'use client'
+import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/app/utils/supabase-server'
+import { getUnreadNotificationCountServer } from '@/app/utils/serverData'
+import TopHeaderLoggedIn from '@/app/components/sections/TopHeaderLoggedIn'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import TopHeaderLoggedIn from "@/app/components/sections/TopHeaderLoggedIn"
-import { useAuth } from '@/app/contexts/AuthContext'
-import { supabase } from '@/app/utils/supabase'
-
-export default function StudioShell({
+export default async function StudioShell({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const router = useRouter()
-  const { user, loading } = useAuth()
-  const [checkingSession, setCheckingSession] = useState(true)
-
-  useEffect(() => {
-    if (user) {
-      setCheckingSession(false)
-      return
-    }
-
-    if (loading) {
-      return
-    }
-
-    if (!loading && !user) {
-      const checkSessionOnce = async () => {
-        const { data: { session: directSession } } = await supabase.auth.getSession()
-        
-        if (directSession?.user) {
-          setCheckingSession(false)
-        } else {
-          router.push('/authenth/login')
-        }
-      }
-      
-      checkSessionOnce()
-    }
-  }, [user, loading, router])
-
-  if (loading || checkingSession) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <span>Loading...</span>
-      </div>
-    )
-  }
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return null
+    redirect('/authenth/login')
   }
+
+  const { data: initialUnreadCount } = await getUnreadNotificationCountServer(user.id)
 
   return (
     <div className='pt-40 pb-30 px-4 md:px-10 xl:pb-40'>
-      <TopHeaderLoggedIn />
+      <TopHeaderLoggedIn
+        userId={user.id}
+        initialUnreadCount={initialUnreadCount}
+      />
       {children}
     </div>
   )

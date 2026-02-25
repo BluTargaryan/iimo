@@ -83,6 +83,19 @@ export async function fetchNotificationsWithShootServer(
   return { data: data as NotificationWithRelations[], error: null }
 }
 
+export async function getUnreadNotificationCountServer(
+  userId: string
+): Promise<{ data: number; error: Error | null }> {
+  const supabase = await createSupabaseServerClient()
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .in('status', ['pending', 'sent'])
+  if (error) return { data: 0, error: new Error(error.message) }
+  return { data: count ?? 0, error: null }
+}
+
 // --- Tier 2: Detail pages ---
 
 export async function fetchShootByIdServer(
