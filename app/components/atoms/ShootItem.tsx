@@ -1,0 +1,74 @@
+'use client'
+import React from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import Button from './Button'
+import share from '@/app/assets/images/share.svg'
+import { type Shoot, type ShootWithClient } from '@/app/utils/shootOperations'
+import { formatDate } from '@/app/utils/format'
+
+interface ShootItemProps {
+  shoot: ShootWithClient
+  onShare?: () => void
+  thumbnailUrls?: string[] // Optional: first few asset thumbnails
+}
+
+const ShootItem = ({ shoot, onShare, thumbnailUrls }: ShootItemProps) => {
+  const handleShare = () => {
+    if (onShare) {
+      onShare()
+    }
+  }
+
+  const displayThumbnails = thumbnailUrls && thumbnailUrls.length > 0 ? thumbnailUrls.slice(0, 4) : []
+
+  return (
+    <div className='col-flex gap-2 md:gap-4'>
+        <h2>{shoot.title || 'Untitled Shoot'}</h2>
+        <p className=''>
+          {shoot.clients?.name && <span>{shoot.clients.name}</span>}
+          {shoot.clients?.name && shoot.shoot_date && ' · '}
+          {shoot.shoot_date && <span>{formatDate(shoot.shoot_date)}</span>}
+          {!shoot.clients?.name && !shoot.shoot_date && '\u00A0'}
+        </p>
+
+        {displayThumbnails.length > 0 ? (
+          <div className='grid grid-cols-2 gap-4.5 md:gap-3.5'>
+            {displayThumbnails.map((src, index) => (
+              <Image 
+                key={src}
+                src={src} 
+                alt={`${shoot.title || 'Shoot'} thumbnail ${index + 1}`} 
+                width={300} 
+                height={300}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                priority={index < 2}
+                className='w-full h-full object-cover border-2 rounded-lg border-foreground' 
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className='row-flex gap-2'>
+          <Link
+            href={`/studio/shoots/${shoot.id}`}
+            className='bg-foreground text-background w-full p-3! rounded-3xl text-xs md:text-base text-center'
+          >
+            View
+          </Link>
+          <Link
+            href={`/studio/edit-shoot?shootId=${shoot.id}`}
+            className='border border-foreground text-foreground w-full p-3! rounded-3xl text-xs md:text-base text-center'
+          >
+            Edit
+          </Link>
+          <Button className='border border-foreground text-foreground w-full p-3! row-flex gap-2 flex-centerize' onClick={handleShare}>
+            <span>Share</span>
+            <Image src={share} alt='share' width={20} height={20} sizes="20px" className='h-4 w-auto' />
+          </Button>
+        </div>
+    </div>
+  )
+}
+
+export default React.memo(ShootItem)

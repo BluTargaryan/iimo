@@ -2,8 +2,11 @@ import React from 'react'
 
 const TopHeader = () => {
   return (
-    <header className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 flex justify-center items-center w-full h-16 mx-auto">
-        <span className='font-semibold'>iimo</span>
+    <header className="fixed top-0 inset-x-4 z-50 flex flex-centerize h-16 border-b bg-background
+    md:inset-x-10
+    xl:inset-x-0 xl:max-w-[1144px] xl:mx-auto xl:h-17
+    ">
+        <span className='font-black xl:text-xl'>iimo</span>
     </header>
   )
 }
