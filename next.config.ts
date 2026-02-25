@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME as string,
+        hostname: process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME || 'daulvmqewulpkwgwjlyr.supabase.co',
       },
     ],
   },
