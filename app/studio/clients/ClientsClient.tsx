@@ -43,10 +43,6 @@ export default function ClientsClient({ initialClients }: ClientsClientProps) {
     return result
   }, [clients, activeTab, searchQuery])
 
-  const handleShare = useCallback(() => {
-    setShowToast(true)
-  }, [])
-
   const handleCloseToast = useCallback(() => {
     setShowToast(false)
   }, [])

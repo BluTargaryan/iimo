@@ -111,7 +111,7 @@ export default function ResetPassword() {
 
       // Session is created automatically, redirect to dashboard
       router.push('/studio/shoots')
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }

@@ -179,7 +179,7 @@ export const downloadUsageRightsPDF = async (
   usageRights?: UsageRights
 ) => {
   const doc = <UsageRightsPDF shootData={shootData} usageRights={usageRights} />
-  const blob = await pdf(doc).toBlob()
+  const blob = await pdf(doc)
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url

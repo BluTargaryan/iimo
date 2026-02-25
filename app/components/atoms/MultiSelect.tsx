@@ -15,22 +15,20 @@ interface MultiSelectProps {
   onChange?: (selectedValues: string[]) => void
 }
 
-const MultiSelect = ({ 
-  id, 
-  name, 
-  label, 
-  placeholder = 'Pick options', 
-  options = [], 
+const MultiSelect = ({
+  id,
+  name,
+  label,
+  placeholder = 'Pick options',
+  options = [],
   value = [],
-  onChange 
+  onChange
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValues, setSelectedValues] = useState<string[]>(value || [])
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    setSelectedValues(value || [])
-  }, [value])
+  const displayValues = value ?? selectedValues
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -49,33 +47,28 @@ const MultiSelect = ({
   }, [isOpen])
 
   const handleOptionClick = (option: string) => {
-    const newSelectedValues = selectedValues.includes(option)
-      ? selectedValues.filter(v => v !== option)
-      : [...selectedValues, option]
-    
+    const newSelectedValues = displayValues.includes(option)
+      ? displayValues.filter(v => v !== option)
+      : [...displayValues, option]
+
     setSelectedValues(newSelectedValues)
-    
-    if (onChange) {
-      onChange(newSelectedValues)
-    }
+    onChange?.(newSelectedValues)
   }
 
   const handleRemoveOption = (option: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    const newSelectedValues = selectedValues.filter(v => v !== option)
+    const newSelectedValues = displayValues.filter(v => v !== option)
     setSelectedValues(newSelectedValues)
-    
-    if (onChange) {
-      onChange(newSelectedValues)
-    }
+    onChange?.(newSelectedValues)
   }
 
-  const displayValue = selectedValues.length > 0 
-    ? `${selectedValues.length} selected` 
+  const displayValue = displayValues.length > 0 
+    ? `${displayValues.length} selected` 
     : placeholder
 
   return (
     <div className="col-flex gap-3.5 items-center">
+      <input type="hidden" name={name} value={JSON.stringify(displayValues)} readOnly aria-hidden />
       <label htmlFor={id}>{label}</label>
       <div className="relative w-full" ref={dropdownRef}>
         {/* Selected Options Display */}
@@ -86,8 +79,8 @@ const MultiSelect = ({
           }`}
         >
           <div className="flex-1 flex flex-wrap gap-2 items-center">
-            {selectedValues.length > 0 ? (
-              selectedValues.map((val) => (
+            {displayValues.length > 0 ? (
+              displayValues.map((val) => (
                 <span
                   key={val}
                   className="inline-flex items-center gap-1.5 px-2 py-1 bg-foreground/10 rounded-md text-sm"
@@ -103,7 +96,7 @@ const MultiSelect = ({
                 </span>
               ))
             ) : (
-              <span className={`text-center flex-1 ${selectedValues.length > 0 ? 'text-foreground' : 'text-placeholder'}`}>
+              <span className={`text-center flex-1 ${displayValues.length > 0 ? 'text-foreground' : 'text-placeholder'}`}>
                 {displayValue}
               </span>
             )}
@@ -124,11 +117,11 @@ const MultiSelect = ({
                 <div
                   onClick={() => handleOptionClick(option)}
                   className={`p-3.5 text-center cursor-pointer hover:bg-foreground/5 transition-colors flex items-center justify-between ${
-                    selectedValues.includes(option) ? 'bg-foreground/10' : ''
+                    displayValues.includes(option) ? 'bg-foreground/10' : ''
                   }`}
                 >
                   <span>{option}</span>
-                  {selectedValues.includes(option) && (
+                  {displayValues.includes(option) && (
                     <span className="text-foreground font-bold">✓</span>
                   )}
                 </div>

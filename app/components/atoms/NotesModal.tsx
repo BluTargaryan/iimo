@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import Button from './Button'
 import closeIcon from '@/app/assets/images/close.svg'
@@ -20,6 +20,9 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
   const [noteToEdit, setNoteToEdit] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const prevVisibleRef = useRef(false)
+
+  const notesToShow = isVisible && clientId ? notes : []
 
   // Fetch notes when modal opens and clientId is provided
   useEffect(() => {
@@ -36,27 +39,26 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
         setLoading(false)
       }
       loadNotes()
-    } else if (isVisible && !clientId) {
-      setNotes([])
     }
   }, [isVisible, clientId])
 
   useEffect(() => {
     if (isVisible) {
-      // Prevent body scrolling when modal is open
+      if (!prevVisibleRef.current) {
+        queueMicrotask(() => {
+          setShowAddNoteForm(false)
+          setNoteText('')
+          setNoteToDelete(null)
+          setNoteToEdit(null)
+          setNotes([])
+        })
+        prevVisibleRef.current = true
+      }
       document.body.style.overflow = 'hidden'
     } else {
-      // Restore body scrolling when modal is closed
+      prevVisibleRef.current = false
       document.body.style.overflow = 'unset'
-      // Reset form state when modal closes
-      setShowAddNoteForm(false)
-      setNoteText('')
-      setNoteToDelete(null)
-      setNoteToEdit(null)
-      setNotes([])
     }
-
-    // Cleanup: restore scrolling when component unmounts
     return () => {
       document.body.style.overflow = 'unset'
     }
@@ -210,13 +212,13 @@ const NotesModal = ({ isVisible, onClose, clientId }: NotesModalProps) => {
           <div className='col-flex gap-4 xl:w-[956px] xl:mx-auto'>
             <p>Loading notes...</p>
           </div>
-        ) : notes.length === 0 ? (
+        ) : notesToShow.length === 0 ? (
           <div className='col-flex gap-4 xl:w-[956px] xl:mx-auto'>
             <p>No notes yet. Add your first note above.</p>
           </div>
         ) : (
           <div className='grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:w-[956px] xl:mx-auto'>
-            {notes.map((note) => (
+            {notesToShow.map((note) => (
               <div key={note.id} className='col-flex gap-2 relative '>
                 {noteToEdit === note.id ? (
                   /* Edit note form */

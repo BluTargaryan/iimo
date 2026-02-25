@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { fetchUsageRights, updateUsageRights } from '@/app/utils/usageRightsOperations'
 import MultiSelect from '@/app/components/atoms/MultiSelect'
@@ -32,7 +32,7 @@ const EditRightsPage = () => {
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const usageOptions = [
+  const usageOptions = useMemo(() => [
     'Editorial',
     'Commercial',
     'Social Media',
@@ -40,15 +40,15 @@ const EditRightsPage = () => {
     'Web/Digital',
     'Unlimited',
     'Other'
-  ]
+  ], [])
+
+  const paramError = (!shootId || !rightsId) ? 'Shoot ID and Rights ID are required' : null
+  const displayError = paramError || error
+  const isFetching = shootId && rightsId ? fetching : false
 
   // Fetch existing usage rights data
   useEffect(() => {
-    if (!shootId || !rightsId) {
-      setError('Shoot ID and Rights ID are required')
-      setFetching(false)
-      return
-    }
+    if (!shootId || !rightsId) return
 
     const loadUsageRights = async () => {
       setFetching(true)
@@ -94,7 +94,7 @@ const EditRightsPage = () => {
     }
 
     loadUsageRights()
-  }, [shootId, rightsId])
+  }, [shootId, rightsId, usageOptions])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -228,7 +228,7 @@ const EditRightsPage = () => {
       })
 
       // Update usage rights record
-      const { data: updatedRights, error: updateError } = await updateUsageRights(rightsId, {
+      const { error: updateError } = await updateUsageRights(rightsId, {
         usage_types: usageTypes,
         start_date: formData.startDate || null,
         end_date: formData.endDate || null,
@@ -258,7 +258,7 @@ const EditRightsPage = () => {
     }
   }
 
-  if (fetching) {
+  if (isFetching) {
     return (
       <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
         <div className='col-flex items-center justify-center py-12'>
@@ -272,9 +272,9 @@ const EditRightsPage = () => {
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>Edit User rights</h1>
 
-      {error && (
+      {displayError && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
-          {error}
+          {displayError}
         </div>
       )}
 

@@ -123,6 +123,7 @@ const PhotoUploadGrid = ({ maxPhotos = 6, onPhotosChange }: PhotoUploadGridProps
             const blobUrl = URL.createObjectURL(photoWithId.file)
             return (
               <div key={photoWithId.id} className="relative rounded-lg h-fit">
+                {/* eslint-disable-next-line @next/next/no-img-element -- blob URL from createObjectURL */}
                 <img
                   src={blobUrl}
                   alt={`Photo ${index + 1}`}

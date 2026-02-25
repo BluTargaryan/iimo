@@ -1,6 +1,4 @@
-import Image from "next/image";
 import TextInput from "../../components/atoms/TextInput";
-import PasswordInput from "../../components/atoms/PasswordInput";
 import Button from "../../components/atoms/Button";
 
 export default function VerifyEmail() {

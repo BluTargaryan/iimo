@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
+import bundleAnalyzer from '@next/bundle-analyzer';
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
+const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
   openAnalyzer: false,
 });
@@ -14,14 +15,12 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'daulvmqewulpkwgwjlyr.supabase.co',
+        hostname: process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME as string,
       },
     ],
   },
   // Remove X-Powered-By header
   poweredByHeader: false,
-  // Enable modern JavaScript output (ES2020+) - reduces legacy JavaScript
-  swcMinify: true,
   compiler: {
     // Remove console.logs in production (saves bytes)
     removeConsole: process.env.NODE_ENV === 'production' ? {

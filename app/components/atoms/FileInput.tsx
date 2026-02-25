@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import folderIcon from '@/app/assets/images/folder.svg'
 
@@ -15,11 +15,9 @@ interface FileInputProps {
 }
 
 const FileInput = ({ id, name, label, placeholder = 'Select a file (pdf)', accept = '.pdf', value, onChange }: FileInputProps) => {
-  const [fileName, setFileName] = useState<string>(value || '')
+  const [fileName, setFileName] = useState<string>(value ?? '')
 
-  useEffect(() => {
-    setFileName(value || '')
-  }, [value])
+  const displayName = (value !== undefined && value !== null) ? (value || '') : fileName
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -49,8 +47,8 @@ const FileInput = ({ id, name, label, placeholder = 'Select a file (pdf)', accep
           htmlFor={id}
           className="w-full border border-foreground rounded-3xl p-3.5 flex items-center justify-between cursor-pointer hover:opacity-70 bg-background"
         >
-          <span className={fileName ? 'text-foreground' : 'text-placeholder'}>
-            {fileName || placeholder}
+          <span className={displayName ? 'text-foreground' : 'text-placeholder'}>
+            {displayName || placeholder}
           </span>
           <Image src={folderIcon} alt="folder" width={20} height={20} sizes="20px" className="w-auto h-4" />
         </label>

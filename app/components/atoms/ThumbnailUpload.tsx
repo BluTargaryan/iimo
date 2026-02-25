@@ -24,6 +24,7 @@ const ThumbnailUpload = ({
   const [showPreview, setShowPreview] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const compositedUrlRef = useRef<string | null>(null)
 
   const processThumbnailFile = async (file: File) => {
     // Check if file is PNG
@@ -119,6 +120,8 @@ const ThumbnailUpload = ({
       compositeThumbnailOnPhoto(photos[0], thumbnail)
         .then(file => {
           const url = URL.createObjectURL(file)
+          if (compositedUrlRef.current) URL.revokeObjectURL(compositedUrlRef.current)
+          compositedUrlRef.current = url
           setCompositedImageUrl(url)
           if (onCompositedImageChange) {
             onCompositedImageChange(file)
@@ -126,15 +129,21 @@ const ThumbnailUpload = ({
         })
         .catch(console.error)
     } else {
-      setCompositedImageUrl(null)
+      queueMicrotask(() => {
+        if (compositedUrlRef.current) {
+          URL.revokeObjectURL(compositedUrlRef.current)
+          compositedUrlRef.current = null
+        }
+        setCompositedImageUrl(null)
+      })
     }
-    
     return () => {
-      if (compositedImageUrl) {
-        URL.revokeObjectURL(compositedImageUrl)
+      if (compositedUrlRef.current) {
+        URL.revokeObjectURL(compositedUrlRef.current)
+        compositedUrlRef.current = null
       }
     }
-  }, [thumbnail, photos])
+  }, [thumbnail, photos, onCompositedImageChange])
 
   return (
     <div className="col-flex gap-3.5 items-center">
@@ -187,6 +196,7 @@ const ThumbnailUpload = ({
         <>
           <div className="w-full row-flex gap-4.5 justify-end">
             <div className="relative w-24 h-24 rounded-lg shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element -- blob URL */}
               <img
                 src={URL.createObjectURL(thumbnail)}
                 alt="Thumbnail"
@@ -216,7 +226,8 @@ const ThumbnailUpload = ({
             <>
               {compositedImageUrl ? (
                 <div className="relative w-full rounded-lg h-fit">
-                  <img
+                  {/* eslint-disable-next-line @next/next/no-img-element -- blob URL */}
+                <img
                     src={compositedImageUrl}
                     alt="Composited preview"
                     className="w-full h-auto"

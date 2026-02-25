@@ -3,7 +3,7 @@
 import React, { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/app/contexts/AuthContext'
-import { fetchClientById, updateClient, type Client } from '@/app/utils/clientOperations'
+import { fetchClientById, updateClient } from '@/app/utils/clientOperations'
 import Button from '@/app/components/atoms/Button'
 import TextInput from '@/app/components/atoms/TextInput'
 
@@ -70,7 +70,7 @@ const EditClientPage = ({ params }: EditClientPageProps) => {
 
     setSaving(true)
 
-    const { data, error: updateError } = await updateClient(id, {
+    const { error: updateError } = await updateClient(id, {
       name: name.trim(),
       email: email.trim() || undefined,
     })

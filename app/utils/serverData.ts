@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from './supabase-server'
-import type { Shoot, ShootWithClient } from './shootOperations'
+import type { ShootWithClient } from './shootOperations'
 import type { Client, Note } from './clientOperations'
 import type { Asset } from './assetOperations'
 import type { NotificationWithRelations } from './notificationOperations'

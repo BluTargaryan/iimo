@@ -26,12 +26,12 @@ const EditShootPage = () => {
   const [fetching, setFetching] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const paramError = !shootId ? 'Shoot ID is required' : null
+  const displayError = paramError || error
+  const isFetching = !!shootId && fetching
+
   useEffect(() => {
-    if (!user?.id || !shootId) {
-      if (!shootId) setError('Shoot ID is required')
-      setFetching(false)
-      return
-    }
+    if (!user?.id || !shootId) return
 
     const loadData = async () => {
       setFetching(true)
@@ -57,7 +57,6 @@ const EditShootPage = () => {
       }
 
       const shoot = shootResult.data
-      const matchingClient = clientsData.find(c => c.id === shoot.client_id)
 
       setFormData({
         title: shoot.title || '',
@@ -151,7 +150,7 @@ const EditShootPage = () => {
     }
   }
 
-  if (fetching) {
+  if (isFetching) {
     return (
       <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
         <div className='col-flex items-center justify-center py-12'>
@@ -165,9 +164,9 @@ const EditShootPage = () => {
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>Edit shoot</h1>
 
-      {error && (
+      {displayError && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
-          {error}
+          {displayError}
         </div>
       )}
 

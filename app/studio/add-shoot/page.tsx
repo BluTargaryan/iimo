@@ -8,7 +8,6 @@ import { createShoot } from '@/app/utils/shootOperations'
 import TextInput from '@/app/components/atoms/TextInput'
 import Select from '@/app/components/atoms/Select'
 import DateInput from '@/app/components/atoms/DateInput'
-import FileInput from '@/app/components/atoms/FileInput'
 import Button from '@/app/components/atoms/Button'
 
 const AddShootPage = () => {
@@ -65,16 +64,6 @@ const AddShootPage = () => {
       [name]: value
     }))
     setError(null)
-  }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setFormData(prev => ({
-        ...prev,
-        contract: file
-      }))
-    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

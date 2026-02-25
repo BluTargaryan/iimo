@@ -257,7 +257,7 @@ export async function updateUsageRights(
     }
 
     // Update usage rights record
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     }
 

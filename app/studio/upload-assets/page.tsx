@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { uploadMultipleAssets } from '@/app/utils/assetOperations'
 import { compositeThumbnailOnPhoto } from '@/app/utils/imageCompositor'
@@ -19,11 +19,8 @@ const UploadAssetsPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)
 
-  useEffect(() => {
-    if (!shootId) {
-      setError('Shoot ID is required')
-    }
-  }, [shootId])
+  const paramError = !shootId ? 'Shoot ID is required' : null
+  const displayError = paramError || error
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,7 +61,7 @@ const UploadAssetsPage = () => {
       }
 
       // Upload original photos as main images, composited versions as watermarked images
-      const { data: assets, error: uploadError } = await uploadMultipleAssets(
+      const { error: uploadError } = await uploadMultipleAssets(
         shootId,
         photos, // Original photos as main images
         thumbnail || undefined,
@@ -100,9 +97,9 @@ const UploadAssetsPage = () => {
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>Upload assets</h1>
 
-      {error && (
+      {displayError && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
-          {error}
+          {displayError}
         </div>
       )}
 

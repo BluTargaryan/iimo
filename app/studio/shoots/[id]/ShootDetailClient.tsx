@@ -54,14 +54,13 @@ export default function ShootDetailClient({
   const hasContract = usageRights.some((r) => r.contract !== null && r.contract !== undefined)
   const allTabs = ['Images', 'Usage Document', 'Usage Rights']
   const tabs = hasContract ? allTabs : allTabs.filter((t) => t !== 'Usage Document')
+  const effectiveTab = (activeTab === 'Usage Document' && !hasContract) ? 'Images' : activeTab
 
   useEffect(() => {
-    if (activeTab === 'Usage Document' && !hasContract) setActiveTab('Images')
-  }, [hasContract, activeTab])
-
-  useEffect(() => {
-    setShowToast(false)
-    setToastMessage('')
+    queueMicrotask(() => {
+      setShowToast(false)
+      setToastMessage('')
+    })
   }, [shootId])
 
   const handleDeleteImage = useCallback((assetId: string) => {
@@ -289,14 +288,14 @@ export default function ShootDetailClient({
           <span
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`text-xl xl:text-3xl cursor-pointer ${activeTab === tab ? 'font-bold' : ''}`}
+            className={`text-xl xl:text-3xl cursor-pointer ${effectiveTab === tab ? 'font-bold' : ''}`}
           >
             {tab}
           </span>
         ))}
       </div>
 
-      {activeTab === 'Images' && (
+      {effectiveTab === 'Images' && (
         <>
           {assets.length === 0 ? (
             <div className='col-flex gap-6 mb-8'>
@@ -351,7 +350,7 @@ export default function ShootDetailClient({
         </>
       )}
 
-      {activeTab === 'Usage Document' && (() => {
+      {effectiveTab === 'Usage Document' && (() => {
         const rightsWithContract = usageRights.find((r) => r.contract)
         const contractUrl = rightsWithContract?.contract || null
         return (
@@ -377,7 +376,7 @@ export default function ShootDetailClient({
         )
       })()}
 
-      {activeTab === 'Usage Rights' && (
+      {effectiveTab === 'Usage Rights' && (
         <div className='col-flex gap-6'>
           {usageRights.length === 0 ? (
             <div className='col-flex gap-6'>

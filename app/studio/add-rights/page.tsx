@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createUsageRights } from '@/app/utils/usageRightsOperations'
 import MultiSelect from '@/app/components/atoms/MultiSelect'
@@ -14,7 +14,6 @@ const AddRightsPage = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const shootId = searchParams.get('shootId')
-  const assetId = searchParams.get('assetId')
 
   const [formData, setFormData] = useState({
     usage: [] as string[],
@@ -26,6 +25,8 @@ const AddRightsPage = () => {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const paramError = !shootId ? 'Shoot ID is required' : null
+  const displayError = error ?? paramError
 
   const usageOptions = [
     'Editorial',
@@ -37,11 +38,6 @@ const AddRightsPage = () => {
     'Other'
   ]
 
-  useEffect(() => {
-    if (!shootId) {
-      setError('Shoot ID is required')
-    }
-  }, [shootId])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -130,7 +126,7 @@ const AddRightsPage = () => {
       })
 
       // Create a single usage rights record with the array of usage types
-      const { data: newRights, error: createError } = await createUsageRights(shootId, {
+      const { error: createError } = await createUsageRights(shootId, {
         usage_types: usageTypes,
         start_date: formData.startDate || null,
         end_date: formData.endDate || null,
@@ -164,9 +160,9 @@ const AddRightsPage = () => {
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
       <h1 className='mb-28'>User rights</h1>
 
-      {error && (
+      {displayError && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
-          {error}
+          {displayError}
         </div>
       )}
 

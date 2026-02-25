@@ -51,7 +51,7 @@ export async function generateMetadata(
     }
 
     const shootTitle = shoot.title || 'Untitled Shoot';
-    const clientName = (shoot.clients as any)?.name || 'Unknown Client';
+    const clientName = (shoot.clients as { name?: string } | null)?.name || 'Unknown Client';
     const shootDate = shoot.shoot_date 
       ? new Date(shoot.shoot_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
       : null;
@@ -99,7 +99,7 @@ export async function generateMetadata(
         ...(ogImage && { images: [ogImage] }),
       },
     };
-  } catch (error) {
+  } catch {
     return {
       title: "Preview | iimo",
       description: "View photo shoot preview on iimo",

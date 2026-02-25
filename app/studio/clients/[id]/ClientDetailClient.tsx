@@ -13,7 +13,6 @@ import {
   type Note,
 } from '@/app/utils/clientOperations'
 import type { Shoot } from '@/app/utils/shootOperations'
-import { getAssetUrl, getWatermarkedImageUrl } from '@/app/utils/assetOperations'
 import Button from '@/app/components/atoms/Button'
 import ShootItem from '@/app/components/atoms/ShootItem'
 import AddShootClientFixed from '@/app/components/sections/AddShootClientFixed'
@@ -21,6 +20,13 @@ import Toast from '@/app/components/sections/Toast'
 import { formatDateShort } from '@/app/utils/format'
 
 const ArchiveConfirmationModal = dynamic(() => import('@/app/components/atoms/ArchiveConfirmationModal'), { ssr: false })
+
+const SHOOT_TAB_STATUS_MAP: Record<string, string> = {
+  Active: 'active',
+  Expiring: 'expiring',
+  Expired: 'expired',
+  Archived: 'archived',
+}
 
 interface ClientDetailClientProps {
   clientId: string
@@ -55,15 +61,8 @@ export default function ClientDetailClient({
 
   const shootTabs = ['Active', 'Expiring', 'Expired', 'Archived']
 
-  const statusMap: Record<string, string> = {
-    Active: 'active',
-    Expiring: 'expiring',
-    Expired: 'expired',
-    Archived: 'archived',
-  }
-
   const filteredShoots = useMemo(() => {
-    const targetStatus = statusMap[activeShootTab]
+    const targetStatus = SHOOT_TAB_STATUS_MAP[activeShootTab]
     return shoots.filter((shoot) => shoot.status === targetStatus)
   }, [shoots, activeShootTab])
 

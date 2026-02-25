@@ -87,7 +87,7 @@ export default function Signup() {
 
       // Redirect to verify OTP page with email
       router.push(`/authenth/verify-otp?email=${encodeURIComponent(formData.email)}`)
-    } catch (err) {
+    } catch {
       setError('An unexpected error occurred')
       setLoading(false)
     }

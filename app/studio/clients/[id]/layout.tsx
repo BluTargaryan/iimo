@@ -37,7 +37,7 @@ export async function generateMetadata(
       title: clientName,
       description,
     }
-  } catch (error) {
+  } catch {
     return {
       title: 'Client Details',
       description: 'View and manage client details, associated shoots, and notes in iimo.',

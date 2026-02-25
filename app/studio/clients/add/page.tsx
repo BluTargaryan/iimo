@@ -41,7 +41,7 @@ const AddClientPage = () => {
 
     setLoading(true)
 
-    const { data, error: createError } = await createClient(user.id, {
+    const { error: createError } = await createClient(user.id, {
       name: name.trim(),
       email: email.trim() || undefined,
     })

@@ -23,10 +23,7 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
   const [isOpen, setIsOpen] = useState(false)
   const [selectedValue, setSelectedValue] = useState(value || '')
   const dropdownRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    setSelectedValue(value || '')
-  }, [value])
+  const displayValue = value ?? selectedValue
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -74,7 +71,7 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
     }
   }
 
-  const displayValue = selectedValue ? getDisplayLabel(selectedValue) : placeholder
+  const displayLabel = displayValue ? getDisplayLabel(displayValue) : placeholder
 
   return (
     <div className="col-flex gap-3.5 items-center">
@@ -87,8 +84,8 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
             isOpen ? 'rounded-b-none border-b-0' : ''
           }`}
         >
-          <span className={`text-center flex-1 ${selectedValue ? 'text-foreground' : 'text-placeholder'}`}>
-            {displayValue}
+          <span className={`text-center flex-1 ${displayValue ? 'text-foreground' : 'text-placeholder'}`}>
+            {displayLabel}
           </span>
           <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <Image src={dropdownArrow} alt="dropdown arrow" width={12} height={8} sizes="12px" className="w-3 h-2" />
@@ -106,7 +103,7 @@ const Select = ({ id, name, label, placeholder = 'Pick an option', options = [],
                 <div
                   onClick={() => handleOptionClick(option.value)}
                   className={`p-3.5 text-center cursor-pointer hover:bg-foreground/5 transition-colors ${
-                    selectedValue === option.value ? 'bg-foreground/10' : ''
+                    displayValue === option.value ? 'bg-foreground/10' : ''
                   }`}
                 >
                   {option.label}

@@ -71,8 +71,8 @@ const Notifications = ({ userId, onClose, onNotificationRead }: NotificationsPro
   )
 
   useEffect(() => {
-    loadNotifications()
-  }, [userId])
+    queueMicrotask(() => loadNotifications())
+  }, [userId, loadNotifications])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

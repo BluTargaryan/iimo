@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Button from './Button'
 import share from '@/app/assets/images/share.svg'
-import { type Shoot, type ShootWithClient } from '@/app/utils/shootOperations'
+import { type ShootWithClient } from '@/app/utils/shootOperations'
 import { formatDate } from '@/app/utils/format'
 
 interface ShootItemProps {
