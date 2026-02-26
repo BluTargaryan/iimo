@@ -252,6 +252,12 @@ export default function ShootDetailClient({
             </Button>
             <Button
               className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
+              onClick={() => router.push(`/studio/edit-shoot?shootId=${shootId}`)}
+            >
+              <span>Edit shoot</span>
+            </Button>
+            <Button
+              className='border border-foreground text-foreground w-full p-3.5 md:w-[322px] row-flex gap-2 flex-centerize'
               onClick={handleArchiveShoot}
               disabled={isArchiving}
             >
