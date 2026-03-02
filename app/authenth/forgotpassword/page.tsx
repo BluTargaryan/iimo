@@ -57,8 +57,9 @@ export default function ForgotPassword() {
 
   return (
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
-      <div className="w-64 col-flex items-center gap-4 mb-28">
+      <div className="col-flex items-center gap-4 mb-28">
         <h1 className="text-center">Forgot password?</h1>
+        <p className="text-center text-placeholder font-normal xl:text-xl">Enter your email and we&apos;ll send you a reset link.</p>
         {error && <span className="text-error">{error}</span>}
         {success && (
           <span className="text-center text-green-600">

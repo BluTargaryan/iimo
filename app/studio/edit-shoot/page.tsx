@@ -162,7 +162,10 @@ const EditShootPage = () => {
 
   return (
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
-      <h1 className='mb-28'>Edit shoot</h1>
+      <div className="col-flex items-center gap-4 mb-28">
+        <h1>Edit shoot</h1>
+        <p className="text-placeholder font-normal xl:text-xl">Update the details for this shoot.</p>
+      </div>
 
       {displayError && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>

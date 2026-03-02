@@ -126,9 +126,16 @@ const AddShootPage = () => {
     }
   }
 
+  const handleCancel = () => {
+    router.push('/studio/shoots')
+  }
+
   return (
     <main className='col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]'>
-      <h1 className='mb-28'>Add shoot</h1>
+      <div className="col-flex items-center gap-4 mb-28">
+        <h1>Add shoot</h1>
+        <p className="text-placeholder font-normal xl:text-xl">Fill in the details for your new shoot.</p>
+      </div>
 
       {error && (
         <div className='w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded'>
@@ -182,7 +189,15 @@ const AddShootPage = () => {
           className='bg-foreground text-background w-full p-3.5'
           disabled={loading}
         >
-          {loading ? 'Creating...' : 'Complete registration'}
+          {loading ? 'Creating...' : 'Add shoot'}
+        </Button>
+        <Button
+          type="button"
+          className='bg-background text-foreground border border-foreground w-full p-3.5'
+          onClick={handleCancel}
+          disabled={loading}
+        >
+          Cancel
         </Button>
       </form>
     </main>

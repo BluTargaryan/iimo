@@ -120,9 +120,9 @@ export default function ResetPassword() {
   if (!sessionChecked) {
     return (
       <div className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
-        <div className="w-64 col-flex items-center gap-4 mb-28">
+        <div className="col-flex items-center gap-4 mb-28">
           <h1 className="text-center">Reset password</h1>
-          <span>Checking reset link...</span>
+          <p className="text-center text-placeholder font-normal xl:text-xl">Checking reset link...</p>
         </div>
       </div>
     )
@@ -130,9 +130,10 @@ export default function ResetPassword() {
 
   return (
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
-      <div className="w-64 col-flex items-center gap-4 mb-28">
+      <div className="col-flex items-center gap-4 mb-28">
         <h1 className="text-center">Reset password</h1>
-        {error && <span className="text-error">{error}</span>}
+        <p className="text-center text-placeholder font-normal xl:text-xl">Choose a strong new password.</p>
+        {error && <span className="text-error text-center xl:text-lg">{error}</span>}
       </div>
 
       <div className="col-flex gap-6 mb-15 w-full md:gap-7.5">

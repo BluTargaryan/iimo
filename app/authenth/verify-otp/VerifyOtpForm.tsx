@@ -107,14 +107,14 @@ export default function VerifyOtpForm() {
 
   return (
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
-      <div className="w-64 col-flex items-center gap-4 mb-28 text-center md:w-full">
+      <div className="col-flex items-center gap-4 mb-28 text-center md:w-full">
         <h1>OTP Verification</h1>
         {email && (
-          <span className="text-center">
+          <span className="text-center text-placeholder font-normal xl:text-xl">
             An OTP has been sent to you at {email}. Please add it below.
           </span>
         )}
-        {error && <span className="text-error">{error}</span>}
+        {error && <span className="text-error text-center xl:text-lg">{error}</span>}
       </div>
 
       <div className="col-flex gap-6 mb-15 w-full md:gap-7.5">

@@ -65,9 +65,9 @@ export default function EventsClient({ initialEvents, userId }: EventsClientProp
         </div>
       ) : (
         <div className='col-flex gap-3'>
-          {events.map((n) => (
+          {events.map((n, index) => (
             <div
-              key={n.id}
+              key={n.id + index}
               className='col-flex gap-1 p-3 rounded-lg border border-foreground/50 bg-foreground/5'
             >
               <span className='text-sm font-medium'>

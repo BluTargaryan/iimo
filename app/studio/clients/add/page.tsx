@@ -64,6 +64,7 @@ const AddClientPage = () => {
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
        <div className="col-flex items-center gap-4 mb-28">
         <h1 className="text-center">Add client</h1>
+        <p className="text-center text-placeholder font-normal xl:text-xl">Fill in the details for your new client.</p>
         {error && <span className="text-error">{error}</span>}
       </div>
 

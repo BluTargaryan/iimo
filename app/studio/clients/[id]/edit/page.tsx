@@ -94,7 +94,7 @@ const EditClientPage = ({ params }: EditClientPageProps) => {
       <form className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
         <div className="col-flex items-center gap-4 mb-28">
           <h1>Edit client</h1>
-          <p>Loading...</p>
+          <p className="text-center text-placeholder font-normal xl:text-xl">Loading...</p>
         </div>
       </form>
     )
@@ -105,7 +105,7 @@ const EditClientPage = ({ params }: EditClientPageProps) => {
       <form className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
         <div className="col-flex items-center gap-4 mb-28">
           <h1>Edit client</h1>
-          <span className="text-error">{error}</span>
+          <span className="text-error text-center xl:text-lg">{error}</span>
           <Button
             type="button"
             className="border-2 border-foreground text-foreground w-full p-3.5"
@@ -122,6 +122,7 @@ const EditClientPage = ({ params }: EditClientPageProps) => {
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
       <div className="col-flex items-center gap-4 mb-28">
         <h1 className="text-center">Edit client</h1>
+        <p className="text-center text-placeholder font-normal xl:text-xl">Update the details for this client.</p>
         {error && <span className="text-error">{error}</span>}
       </div>
 

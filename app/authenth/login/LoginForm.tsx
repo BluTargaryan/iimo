@@ -72,8 +72,9 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="col-flex items-center max-w-[270px] mx-auto md:max-w-[493px]">
-      <div className="w-64 col-flex items-center gap-4 mb-28">
+      <div className="col-flex items-center gap-4 mb-28">
         <h1>Log in</h1>
+        <p className="text-center text-placeholder font-normal xl:text-xl">Welcome back. Sign in to your account.</p>
         {error && <span className="text-error">{error}</span>}
       </div>
 
